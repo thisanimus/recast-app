@@ -9,7 +9,7 @@ export class EpisodePlayer extends HTMLElement {
 	}
 	constructor() {
 		super();
-		this.guid = this.getAttribute('guid') || Settings.data.currentEpisode;
+		this.guid = this.getAttribute('guid') || Settings.data.currentEpisode || null;
 		this.minimized = this.getAttribute('minimized');
 
 		this.refs = {
@@ -135,6 +135,9 @@ export class EpisodePlayer extends HTMLElement {
 
 	connectedCallback() {
 		this.attachEventListeners();
+		if (this.guid) {
+			this.loadEpisode();
+		}
 		// set playbackRate
 		if (this.refs.audio.playbackRate !== Settings.data.playbackRate) {
 			this.setPlaybackRate(Settings.data.playbackRate || 1);
@@ -179,7 +182,10 @@ export class EpisodePlayer extends HTMLElement {
 	}
 
 	render() {
-		const imageSrc = this.episode.image || this.podcast.image || '/assets/img/default-episode-image.webp';
+		const imageSrc =
+			'https://proxy.thisanimus.com/?url=' + this.episode.image ||
+			'https://proxy.thisanimus.com/?url=' + this.podcast.image ||
+			'/assets/img/default-episode-image.webp';
 		this.refs.image.src = imageSrc;
 		this.refs.imageMini.src = imageSrc;
 		this.refs.title.textContent = this.episode.title;

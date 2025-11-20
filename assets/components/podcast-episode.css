@@ -1,0 +1,62 @@
+@property --angle {
+	syntax: '<angle>';
+	inherits: true;
+	initial-value: 0deg;
+}
+
+.podcast-episode {
+	button {
+		display: grid;
+		align-items: center;
+		grid-template-columns: 1fr auto;
+		gap: var(--space-md);
+		width: 100%;
+		border-bottom: var(--border-width) solid var(--color-ui-muted);
+		padding: var(--space-sm) 0;
+	}
+	.prepend {
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		font-weight: 600;
+		font-size: 0.75rem;
+		color: var(--color-text-muted);
+	}
+	.append {
+		font-size: 0.8rem;
+		color: var(--color-text-muted);
+	}
+
+	.icon-wrapper {
+		--size: 2.5rem;
+		--border: 1.5px;
+		--offset: calc(100% - var(--border));
+		--angle: calc(360deg * var(--progress));
+		position: relative;
+		height: var(--size);
+		width: var(--size);
+		.icon {
+			padding: 25%;
+		}
+		svg {
+			fill: currentColor;
+		}
+		.circle-progress {
+			mask-image: radial-gradient(circle closest-side, transparent var(--offset), black var(--offset));
+			height: 100%;
+			width: 100%;
+			position: absolute;
+			top: 0;
+			left: 0;
+			transition: --angle 700ms ease-out, --guage-color 1500ms;
+			.progress {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				background: conic-gradient(currentColor var(--angle), var(--color-ui-muted) 0deg);
+			}
+		}
+	}
+}
