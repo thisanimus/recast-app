@@ -1,0 +1,13 @@
+.button,
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+	all: unset;
+	box-sizing: border-box;
+	cursor: pointer;
+	&:hover,
+	&:focus {
+		color: var(--color-link-hover);
+	}
+}

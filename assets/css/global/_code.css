@@ -1,0 +1,21 @@
+code,
+pre {
+	font-family: var(--font-monospace);
+	font-size: 0.75rem;
+	color: var(--color-link-default);
+}
+code {
+	white-space: nowrap;
+}
+
+pre {
+	overflow-x: auto;
+	padding: var(--space-sm);
+	margin: 0 0 var(--space-sm) 0;
+	background: var(--color-background-intense);
+}
+pre > code {
+	margin: 0;
+	display: block;
+	white-space: pre;
+}

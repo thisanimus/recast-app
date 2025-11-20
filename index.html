@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" class="view-index">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+		<title>Recast</title>
+		<link rel="stylesheet" href="assets/css/style.css"/>
+
+		<link rel="icon" href="assets/appicon/favicon.ico" sizes="32x32">
+		<link rel="icon" href="assets/appicon/icon.svg" type="image/svg+xml">
+		<link rel="apple-touch-icon" href="assets/appicon/apple-touch-icon.png">
+		<link rel="manifest" href="manifest.json">
+	</head>
+	<body>
+		<router-layout>
+			<router-view id="index" class="active">
+				<h1>Index</h1>
+				<podcast-index>
+					<div class="grid"></div>
+				</podcast-index>
+				<a class="router-link" href="?view=podcast">Podcast</a>
+				<a class="router-link" href="?view=episode">Episode</a>
+			</router-view>
+			<router-view id="podcast">
+				<h1>Podcast</h1>
+				<podcast-single>
+					<img class="image"/>
+					<div class="title"></div>
+					<div class="subtitle">
+						<span class="category"></span>
+						<span class="divider">•</span>
+						<span class="author"></span>
+					</div>
+					<div class="description"></div>
+					<ol class="episodes"></ol>
+				</podcast-single>
+				<a class="router-link" href="?view=index">Index</a>
+				<a class="router-link" href="?view=episode">Episode</a>
+			</router-view>
+			<router-view id="episode">
+				<h1>Episode</h1>
+				<a class="router-link" href="?view=podcast">Podcast</a>
+				<a class="router-link" href="?view=index">Index</a>
+			</router-view>
+		</router-layout>
+		<episode-player minimized="true">
+			<div class="episode-player-layout">
+				<div class="collapse">
+					<audio></audio>
+					<img class="image" src="/assets/img/default-episode-image.webp"/>
+					<div class="title-wrapper">
+						<div class="title"></div>
+						<div class="podcast-title"></div>
+					</div>
+					<div class="time">
+						<input id="time-input" type="range" step="1" min="0" max="0"/>
+						<time class="time-total"></time>
+						<label class="hidden" for="time-input">Current time</label>
+						<time class="time-remaining"></time>
+					</div>
+
+				</div>
+
+
+				<div class="player-buttons">
+					<img class="image-mini"/>
+					<button id="skip-back" title="Skip Back">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw">
+							<polyline points="1 4 1 10 7 10"></polyline>
+							<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+						</svg>
+					</button>
+					<play-pause state="pause" progress="0">
+						<button title="Play">
+							<div class="icon">
+								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle">
+									<circle cx="12" cy="12" r="10"></circle>
+									<polygon points="10 8 16 12 10 16 10 8"></polygon>
+								</svg>
+							</div>
+						</button>
+					</play-pause>
+					<button id="skip-forward" title="Skip Forward">
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw">
+							<polyline points="23 4 23 10 17 10"></polyline>
+							<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+						</svg>
+					</button>
+					<button id="playback-rate" title="Playback Rate">1x</button>
+				</div>
+
+			</div>
+		</episode-player>
+
+		<script src="assets/js/index.js" type="module"></script>
+	</body>
+</html>

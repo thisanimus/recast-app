@@ -1,0 +1,53 @@
+{
+	"name": "Recast - Podcast App",
+	"short_name": "Recast",
+	"description": "A free podcast app: ad-free, subscription-free, tracking-free, cost-free. Just free.",
+	"start_url": "/",
+	"id": "https://recastapp.thisanimus.com/app",
+	"display": "standalone",
+	"background_color": "#000",
+	"theme_color": "#000",
+	"orientation": "portrait-primary",
+
+	"icons": [
+		{
+			"src": "/assets/appicon/icon-192x192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/assets/appicon/icon-512x512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/assets/appicon/icon-512x512-maskable.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	],
+	"categories": ["entertainment", "music", "news"],
+	"screenshots": [
+		{
+			"src": "/assets/img/screenshot-1.png",
+			"sizes": "1206x2622",
+			"type": "image/png",
+			"form_factor": "narrow"
+		},
+		{
+			"src": "/assets/img/screenshot-2.png",
+			"sizes": "1206x2622",
+			"type": "image/png",
+			"form_factor": "narrow"
+		},
+		{
+			"src": "/assets/img/screenshot-3.png",
+			"sizes": "1206x2622",
+			"type": "image/png",
+			"form_factor": "narrow"
+		}
+	]
+}

@@ -1,0 +1,22 @@
+{
+	"name": "sermom-browser",
+	"version": "0.0.1",
+	"description": "A web componet for the Countryside Bible Church Sermon API.",
+	"main": "index.html",
+	"scripts": {
+		"dev": "npx @11ty/eleventy-dev-server"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thisanimus/baselayer.css.git"
+	},
+	"author": "Andrew Hale",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/thisanimus/baselayer.css/issues"
+	},
+	"homepage": "https://github.com/thisanimus/baselayer.css#readme",
+	"devDependencies": {
+		"@11ty/eleventy-dev-server": "latest"
+	}
+}

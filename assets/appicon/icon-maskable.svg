@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="RSSicon" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 256 256">
+  <!-- Generator: Adobe Illustrator 29.7.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 8)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <rect width="256" height="256"/>
+  <g>
+    <path class="st0" d="M146.29,134.6h0c13.38-6.12,21.43-19.73,21.43-35.4,0-23.4-16.8-41.2-46.8-41.2h-37.6v72.98c37.01,0,67.02,30.01,67.02,67.02h22.34c0-24.78-10.1-47.21-26.39-63.4h0ZM123.09,121.26c-12.34,0-22.34-10-22.34-22.34s10-22.34,22.34-22.34,22.34,10,22.34,22.34-10,22.34-22.34,22.34Z"/>
+    <circle class="st0" cx="105.66" cy="175.66" r="22.34"/>
+  </g>
+</svg>

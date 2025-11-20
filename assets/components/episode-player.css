@@ -1,0 +1,80 @@
+.episode-player-layout {
+	position: fixed;
+	z-index: 10;
+	bottom: 0;
+	height: 100%;
+	background: var(--color-background-intense);
+	display: grid;
+	grid-template-rows: 1fr 5rem;
+	padding: var(--space-md);
+	clip-path: inset(0 0 0 0 round 0);
+	transition: clip-path 350ms;
+
+	.image {
+		border-radius: 0.5rem;
+		overflow: hidden;
+		border: var(--border-width) solid var(--color-ui-muted);
+	}
+
+	.collapse {
+		overflow: hidden;
+		align-self: center;
+	}
+	.title-wrapper {
+		text-align: center;
+		margin: var(--space-md) auto;
+	}
+	.title {
+		font-size: 1.25rem;
+		font-weight: 600;
+		margin-block-end: var(--space-sm);
+	}
+	.time {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+	}
+
+	.player-buttons {
+		align-self: end;
+		width: 100%;
+		display: grid;
+		grid-template-columns: 1fr auto auto auto 1fr;
+		align-items: center;
+	}
+	.image-mini {
+		padding: unset;
+		width: 3rem;
+		height: 3rem;
+		scale: 0;
+		transition: scale 250ms;
+	}
+
+	play-pause {
+		box-sizing: border-box;
+		display: block;
+		width: 4rem;
+		height: 4rem;
+		padding: 10%;
+		border: 2px solid currentColor;
+		border-radius: 50%;
+		svg {
+			width: 100%;
+			height: 100%;
+		}
+	}
+}
+episode-player {
+	&[minimized='true'] {
+		.episode-player-layout {
+			clip-path: inset(calc(100% - 0.5rem - 4rem) 0.5rem 0.5rem 0.5rem round 0.5rem);
+		}
+		.image-mini {
+			scale: 1;
+		}
+		play-pause {
+			height: 3rem;
+			width: 3rem;
+		}
+	}
+}
