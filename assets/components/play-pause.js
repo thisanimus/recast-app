@@ -40,6 +40,7 @@ class PlayPause extends HTMLElement {
 				this.refs.icon.innerHTML = pause;
 			}
 		}
+		this.style.setProperty('--progress', this.progress || 0);
 		this.attachEventListeners();
 	}
 

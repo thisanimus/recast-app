@@ -35,6 +35,9 @@
 	--font-monospace: 'SFMono-Regular', Andale Mono, Consolas, 'Liberation Mono', Menlo, monospace;
 	--font-serif: Palatino, 'Palatino Linotype', 'Palatino LT STD', 'Book Antiqua', Georgia, serif;
 }
+* {
+	-webkit-tap-highlight-color: transparent;
+}
 html {
 	font-size: 0.8rem;
 	scroll-behavior: smooth;
@@ -42,10 +45,9 @@ html {
 
 body {
 	font-family: var(--font-sans);
-	line-height: 1.5;
+	line-height: 1.3;
 	color: var(--color-text);
 	background-color: var(--color-background);
 	height: 100%;
-	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 }

@@ -25,7 +25,7 @@
 			<router-view id="podcast">
 				<h1>Podcast</h1>
 				<podcast-single>
-					<img class="image"/>
+					<img class="image" crossorigin="anonymous"/>
 					<div class="title"></div>
 					<div class="subtitle">
 						<span class="category"></span>
@@ -43,12 +43,16 @@
 				<a class="router-link" href="?view=podcast">Podcast</a>
 				<a class="router-link" href="?view=index">Index</a>
 			</router-view>
+			<router-view id="settings">
+				<h1>Settings</h1>
+				<button id="persist">Request Persistent Storage</button>
+			</router-view>
 		</router-layout>
 		<episode-player minimized="true">
 			<div class="episode-player-layout">
 				<div class="collapse">
 					<audio></audio>
-					<img class="image" src="/assets/img/default-episode-image.webp"/>
+					<img class="image" src="/assets/img/default-episode-image.webp" crossorigin="anonymous"/>
 					<div class="title-wrapper">
 						<div class="title"></div>
 						<div class="podcast-title"></div>
@@ -64,7 +68,7 @@
 
 
 				<div class="player-buttons">
-					<img class="image-mini"/>
+					<img class="image-mini" crossorigin="anonymous"/>
 					<button id="skip-back" title="Skip Back">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw">
 							<polyline points="1 4 1 10 7 10"></polyline>
@@ -74,9 +78,8 @@
 					<play-pause state="pause" progress="0">
 						<button title="Play">
 							<div class="icon">
-								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle">
-									<circle cx="12" cy="12" r="10"></circle>
-									<polygon points="10 8 16 12 10 16 10 8"></polygon>
+								<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewbox="0 0 512 512">
+									<path d="M173,440c-6.14-.01-12.17-1.62-17.5-4.67-12-6.8-19.46-20-19.46-34.33V111c0-14.37,7.46-27.53,19.46-34.33,11.11-6.39,24.82-6.21,35.77.45l247.85,148.36c16.84,10.56,21.94,32.78,11.38,49.62-2.89,4.6-6.77,8.49-11.38,11.38l-247.89,148.4c-5.5,3.33-11.8,5.1-18.23,5.12Z"/>
 								</svg>
 							</div>
 						</button>
@@ -95,4 +98,4 @@
 
 		<script src="assets/js/index.js" type="module"></script>
 	</body>
-</html>
+</html></body></html>

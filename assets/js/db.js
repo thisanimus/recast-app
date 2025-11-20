@@ -1,3 +1,5 @@
+import { sqlite3Worker1Promiser } from '/assets/sqlite-wasm/index.mjs';
+
 /**
  * @typedef {Object} Podcast
  * @property {string} title - The podcast title
@@ -33,47 +35,73 @@
  */
 
 /**
- * IndexedDB Podcast Manager
+ * SQLite-wasm + OPFS Podcast Manager
  * Manages podcasts and episodes with an intuitive API
  */
 
 class PodcastAppDB {
 	constructor() {
-		this.dbName = 'PodcastAppDB';
-		this.version = 1;
-		this.db = null;
+		this.dbName = 'podcast.db';
+		this.promiser = null;
 	}
 
 	/**
-	 * Initialize the database
-	 * @returns {Promise<IDBDatabase>}
+	 * Initialize the database with SQLite worker
+	 * @returns {Promise<void>}
 	 */
 	async init() {
-		return new Promise((resolve, reject) => {
-			const request = indexedDB.open(this.dbName, this.version);
+		if (this.promiser) return;
 
-			request.onerror = () => reject(request.error);
-			request.onsuccess = () => {
-				this.db = request.result;
-				resolve(this.db);
-			};
+		this.promiser = await sqlite3Worker1Promiser({
+			type: 'module',
+			url: '/assets/js/sqlite-wasm/jswasm/sqlite3-worker1.mjs',
+		});
 
-			request.onupgradeneeded = (event) => {
-				const db = event.target.result;
+		// Open database with OPFS
+		await this.promiser('open', {
+			filename: 'file:podcast.db?vfs=opfs',
+		});
 
-				// Create podcasts store
-				if (!db.objectStoreNames.contains('podcasts')) {
-					const podcastStore = db.createObjectStore('podcasts', { keyPath: 'feedUrl' });
-					podcastStore.createIndex('feedUrl', 'feedUrl', { unique: true });
-				}
+		// Create tables
+		await this.promiser('exec', {
+			sql: `
+				CREATE TABLE IF NOT EXISTS podcasts (
+					feedUrl TEXT PRIMARY KEY,
+					title TEXT NOT NULL,
+					link TEXT,
+					description TEXT,
+					pubDate TEXT,
+					image TEXT,
+					author TEXT,
+					category TEXT,
+					explicit INTEGER DEFAULT 0,
+					subtitle TEXT
+				);
 
-				// Create episodes store
-				if (!db.objectStoreNames.contains('episodes')) {
-					const episodeStore = db.createObjectStore('episodes', { keyPath: 'guid' });
-					episodeStore.createIndex('guid', 'guid', { unique: true });
-					episodeStore.createIndex('podcast', 'podcast', { unique: false });
-				}
-			};
+				CREATE TABLE IF NOT EXISTS episodes (
+					guid TEXT PRIMARY KEY,
+					podcast TEXT NOT NULL,
+					title TEXT NOT NULL,
+					link TEXT,
+					description TEXT,
+					subtitle TEXT,
+					pubDate TEXT,
+					image TEXT,
+					audio TEXT,
+					season INTEGER,
+					episode INTEGER,
+					filesize INTEGER,
+					duration INTEGER,
+					progress INTEGER DEFAULT 0,
+					downloaded INTEGER DEFAULT 0,
+					archived INTEGER DEFAULT 0,
+					FOREIGN KEY (podcast) REFERENCES podcasts(feedUrl) ON DELETE CASCADE
+				);
+
+				CREATE INDEX IF NOT EXISTS idx_episodes_podcast ON episodes(podcast);
+				CREATE INDEX IF NOT EXISTS idx_episodes_pubDate ON episodes(pubDate);
+			`,
+			returnValue: 'resultRows',
 		});
 	}
 
@@ -83,59 +111,67 @@ class PodcastAppDB {
 	podcasts = {
 		/**
 		 * Upsert (create or update) one or more podcasts
-		 * @param {Podcast|Podcast[]} data - Single podcast or array of podcasts
-		 * @returns {Promise<Array<{success: boolean, feedUrl: string, error?: string}>>}
+		 * @param {Podcast} data - Single podcast
+		 * @returns {Promise<Podcast>}
 		 */
 		upsert: async (data) => {
 			await this._ensureInit();
-			const items = Array.isArray(data) ? data : [data];
-			const tx = this.db.transaction(['podcasts'], 'readwrite');
-			const store = tx.objectStore('podcasts');
 
-			const results = [];
-			for (const item of items) {
-				try {
-					await new Promise((resolve, reject) => {
-						const request = store.put(item);
-						request.onsuccess = () => resolve(request.result);
-						request.onerror = () => reject(request.error);
-					});
-					results.push({ success: true, feedUrl: item.feedUrl });
-				} catch (error) {
-					results.push({ success: false, feedUrl: item.feedUrl, error: error.message });
-				}
-			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
+			await this.promiser('exec', {
+				sql: `
+					INSERT INTO podcasts (feedUrl, title, link, description, pubDate, image, author, category, explicit, subtitle)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+					ON CONFLICT(feedUrl) DO UPDATE SET
+						title = excluded.title,
+						link = excluded.link,
+						description = excluded.description,
+						pubDate = excluded.pubDate,
+						image = excluded.image,
+						author = excluded.author,
+						category = excluded.category,
+						explicit = excluded.explicit,
+						subtitle = excluded.subtitle
+				`,
+				bind: [
+					data.feedUrl,
+					data.title,
+					data.link || null,
+					data.description || null,
+					data.pubDate || null,
+					data.image || null,
+					data.author || null,
+					data.category || null,
+					data.explicit ? 1 : 0,
+					data.subtitle || null,
+				],
 			});
 
-			return results;
+			return data;
 		},
 
 		/**
-		 * Read one or more podcasts by feedUrl
-		 * @param {string|string[]} feedUrls - Single feedUrl or array of feedUrls
-		 * @returns {Promise<Podcast|Podcast[]|null>} Single podcast, array of podcasts, or null if not found
+		 * Read one podcast by feedUrl
+		 * @param {string} feedUrl - Single feedUrl
+		 * @returns {Promise<Podcast|null>} Single podcast, or null if not found
 		 */
-		read: async (feedUrls) => {
+		read: async (feedUrl) => {
 			await this._ensureInit();
-			const urls = Array.isArray(feedUrls) ? feedUrls : [feedUrls];
-			const tx = this.db.transaction(['podcasts'], 'readonly');
-			const store = tx.objectStore('podcasts');
 
-			const results = [];
-			for (const url of urls) {
-				const podcast = await new Promise((resolve, reject) => {
-					const request = store.get(url);
-					request.onsuccess = () => resolve(request.result);
-					request.onerror = () => reject(request.error);
-				});
-				results.push(podcast || null);
+			const query = await this.promiser('exec', {
+				sql: 'SELECT * FROM podcasts WHERE feedUrl = ?',
+				bind: [feedUrl],
+				returnValue: 'resultRows',
+				rowMode: 'object',
+			});
+
+			const rows = query.result.resultRows;
+			if (rows.length > 0) {
+				return {
+					...rows[0],
+					explicit: Boolean(rows[0].explicit),
+				};
 			}
-
-			return Array.isArray(feedUrls) ? results : results[0];
+			return null;
 		},
 
 		/**
@@ -144,47 +180,36 @@ class PodcastAppDB {
 		 */
 		readAll: async () => {
 			await this._ensureInit();
-			const tx = this.db.transaction(['podcasts'], 'readonly');
-			const store = tx.objectStore('podcasts');
 
-			return new Promise((resolve, reject) => {
-				const request = store.getAll();
-				request.onsuccess = () => resolve(request.result);
-				request.onerror = () => reject(request.error);
+			const query = await this.promiser('exec', {
+				sql: 'SELECT * FROM podcasts ORDER BY title',
+				returnValue: 'resultRows',
+				rowMode: 'object',
 			});
+
+			return query.result.resultRows.map((row) => ({
+				...row,
+				explicit: Boolean(row.explicit),
+			}));
 		},
 
 		/**
-		 * Delete one or more podcasts by feedUrl
-		 * @param {string|string[]} feedUrls - Single feedUrl or array of feedUrls
-		 * @returns {Promise<Array<{success: boolean, feedUrl: string, error?: string}>>}
+		 * Delete podcasts by feedUrl
+		 * @param {string} feedUrl - Single feedUrl
+		 * @returns {Promise<{success: boolean, error?: string}>}
 		 */
-		delete: async (feedUrls) => {
+		delete: async (feedUrl) => {
 			await this._ensureInit();
-			const urls = Array.isArray(feedUrls) ? feedUrls : [feedUrls];
-			const tx = this.db.transaction(['podcasts'], 'readwrite');
-			const store = tx.objectStore('podcasts');
 
-			const results = [];
-			for (const url of urls) {
-				try {
-					await new Promise((resolve, reject) => {
-						const request = store.delete(url);
-						request.onsuccess = () => resolve();
-						request.onerror = () => reject(request.error);
-					});
-					results.push({ success: true, feedUrl: url });
-				} catch (error) {
-					results.push({ success: false, feedUrl: url, error: error.message });
-				}
+			try {
+				await this.promiser('exec', {
+					sql: 'DELETE FROM podcasts WHERE feedUrl = ?',
+					bind: [feedUrl],
+				});
+				return { success: true };
+			} catch (error) {
+				return { success: false, error: error.message };
 			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
-			});
-
-			return results;
 		},
 	};
 
@@ -199,50 +224,74 @@ class PodcastAppDB {
 		 */
 		upsert: async (data) => {
 			await this._ensureInit();
-			const items = Array.isArray(data) ? data : [data];
-			const tx = this.db.transaction(['episodes'], 'readwrite');
-			const store = tx.objectStore('episodes');
 
+			const episodes = Array.isArray(data) ? data : [data];
 			const results = [];
-			for (const item of items) {
+
+			for (const episode of episodes) {
 				try {
-					// First, try to get the existing item
-					const existingItem = await new Promise((resolve, reject) => {
-						const request = store.get(item.guid); // assuming 'guid' is your key
-						request.onsuccess = () => resolve(request.result);
-						request.onerror = () => reject(request.error);
+					// First check if episode exists to preserve progress, archived, downloaded
+					const query = await this.promiser('exec', {
+						sql: 'SELECT progress, archived, downloaded FROM episodes WHERE guid = ?',
+						bind: [episode.guid],
+						returnValue: 'resultRows',
+						rowMode: 'object',
 					});
 
-					// Merge: preserve progress and archived from existing item
-					const mergedItem = {
-						...item,
-						...(existingItem && {
-							progress: existingItem.progress,
-							archived: existingItem.archived,
-						}),
-					};
+					const existing = query.result.resultRows;
+					const preserveProgress = existing.length > 0 ? existing[0].progress : 0;
+					const preserveArchived = existing.length > 0 ? existing[0].archived : 0;
+					const preserveDownloaded = existing.length > 0 ? existing[0].downloaded : 0;
 
-					await new Promise((resolve, reject) => {
-						const request = store.put(mergedItem);
-						request.onsuccess = () => resolve(request.result);
-						request.onerror = () => reject(request.error);
+					await this.promiser('exec', {
+						sql: `
+							INSERT INTO episodes (guid, podcast, title, link, description, subtitle, pubDate, image, audio, season, episode, filesize, duration, progress, downloaded, archived)
+							VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+							ON CONFLICT(guid) DO UPDATE SET
+								podcast = excluded.podcast,
+								title = excluded.title,
+								link = excluded.link,
+								description = excluded.description,
+								subtitle = excluded.subtitle,
+								pubDate = excluded.pubDate,
+								image = excluded.image,
+								audio = excluded.audio,
+								season = excluded.season,
+								episode = excluded.episode,
+								filesize = excluded.filesize,
+								duration = excluded.duration
+						`,
+						bind: [
+							episode.guid,
+							episode.podcast,
+							episode.title,
+							episode.link || null,
+							episode.description || null,
+							episode.subtitle || null,
+							episode.pubDate || null,
+							episode.image || null,
+							episode.audio || null,
+							episode.season || null,
+							episode.episode || null,
+							episode.filesize || null,
+							episode.duration || null,
+							preserveProgress,
+							preserveDownloaded,
+							preserveArchived,
+						],
 					});
-					results.push({ success: true, guid: item.guid });
+
+					results.push({ success: true, guid: episode.guid });
 				} catch (error) {
-					results.push({ success: false, guid: item.guid, error: error.message });
+					results.push({ success: false, guid: episode.guid, error: error.message });
 				}
 			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
-			});
 
 			return results;
 		},
 
 		/**
-		 * Upsert (create or update) one or more episodes
+		 * Update Prop - Update a single property of one episode
 		 * @param {string} guid - the ID of the episode
 		 * @param {string} key - the prop key to update
 		 * @param {string|number} value - the new prop value
@@ -250,49 +299,58 @@ class PodcastAppDB {
 		 */
 		updateProp: async (guid, key, value) => {
 			await this._ensureInit();
-			const tx = this.db.transaction(['episodes'], 'readwrite');
-			const store = tx.objectStore('episodes');
 
-			const getEpisode = store.get(guid);
+			// Validate the key to prevent SQL injection
+			const allowedKeys = [
+				'progress',
+				'downloaded',
+				'archived',
+				'title',
+				'description',
+				'subtitle',
+				'image',
+				'audio',
+				'season',
+				'episode',
+				'filesize',
+				'duration',
+			];
+			if (!allowedKeys.includes(key)) {
+				throw new Error(`Invalid property key: ${key}`);
+			}
 
-			getEpisode.onsuccess = (event) => {
-				const episode = event.target.result;
-				if (episode) {
-					episode[key] = value;
-					store.put(episode);
-					return episode;
-				} else {
-					console.log('Record not found');
-				}
-			};
+			await this.promiser('exec', {
+				sql: `UPDATE episodes SET ${key} = ? WHERE guid = ?`,
+				bind: [value, guid],
+			});
 
-			getEpisode.onerror = function (event) {
-				console.error('Error retrieving data:', event.target.error);
-			};
+			return await this.episodes.read(guid);
 		},
 
 		/**
-		 * Read one or more episodes by guid
-		 * @param {string|string[]} guids - Single guid or array of guids
-		 * @returns {Promise<Episode|Episode[]|null>} Single episode, array of episodes, or null if not found
+		 * Read one episode by guid
+		 * @param {string} guid - Single guid
+		 * @returns {Promise<Episode|null>} Single episode, or null if not found
 		 */
-		read: async (guids) => {
+		read: async (guid) => {
 			await this._ensureInit();
-			const ids = Array.isArray(guids) ? guids : [guids];
-			const tx = this.db.transaction(['episodes'], 'readonly');
-			const store = tx.objectStore('episodes');
 
-			const results = [];
-			for (const id of ids) {
-				const episode = await new Promise((resolve, reject) => {
-					const request = store.get(id);
-					request.onsuccess = () => resolve(request.result);
-					request.onerror = () => reject(request.error);
-				});
-				results.push(episode || null);
+			const query = await this.promiser('exec', {
+				sql: 'SELECT * FROM episodes WHERE guid = ?',
+				bind: [guid],
+				returnValue: 'resultRows',
+				rowMode: 'object',
+			});
+
+			const rows = query.result.resultRows;
+			if (rows.length > 0) {
+				return {
+					...rows[0],
+					downloaded: Boolean(rows[0].downloaded),
+					archived: Boolean(rows[0].archived),
+				};
 			}
-
-			return Array.isArray(guids) ? results : results[0];
+			return null;
 		},
 
 		/**
@@ -301,14 +359,18 @@ class PodcastAppDB {
 		 */
 		readAll: async () => {
 			await this._ensureInit();
-			const tx = this.db.transaction(['episodes'], 'readonly');
-			const store = tx.objectStore('episodes');
 
-			return new Promise((resolve, reject) => {
-				const request = store.getAll();
-				request.onsuccess = () => resolve(request.result);
-				request.onerror = () => reject(request.error);
+			const query = await this.promiser('exec', {
+				sql: 'SELECT * FROM episodes ORDER BY pubDate DESC',
+				returnValue: 'resultRows',
+				rowMode: 'object',
 			});
+
+			return query.result.resultRows.map((row) => ({
+				...row,
+				downloaded: Boolean(row.downloaded),
+				archived: Boolean(row.archived),
+			}));
 		},
 
 		/**
@@ -318,15 +380,19 @@ class PodcastAppDB {
 		 */
 		readByPodcast: async (feedUrl) => {
 			await this._ensureInit();
-			const tx = this.db.transaction(['episodes'], 'readonly');
-			const store = tx.objectStore('episodes');
-			const index = store.index('podcast');
 
-			return new Promise((resolve, reject) => {
-				const request = index.getAll(feedUrl);
-				request.onsuccess = () => resolve(request.result);
-				request.onerror = () => reject(request.error);
+			const query = await this.promiser('exec', {
+				sql: 'SELECT * FROM episodes WHERE podcast = ? ORDER BY pubDate DESC',
+				bind: [feedUrl],
+				returnValue: 'resultRows',
+				rowMode: 'object',
 			});
+
+			return query.result.resultRows.map((row) => ({
+				...row,
+				downloaded: Boolean(row.downloaded),
+				archived: Boolean(row.archived),
+			}));
 		},
 
 		/**
@@ -336,28 +402,21 @@ class PodcastAppDB {
 		 */
 		delete: async (guids) => {
 			await this._ensureInit();
-			const ids = Array.isArray(guids) ? guids : [guids];
-			const tx = this.db.transaction(['episodes'], 'readwrite');
-			const store = tx.objectStore('episodes');
 
+			const guidArray = Array.isArray(guids) ? guids : [guids];
 			const results = [];
-			for (const id of ids) {
+
+			for (const guid of guidArray) {
 				try {
-					await new Promise((resolve, reject) => {
-						const request = store.delete(id);
-						request.onsuccess = () => resolve();
-						request.onerror = () => reject(request.error);
+					await this.promiser('exec', {
+						sql: 'DELETE FROM episodes WHERE guid = ?',
+						bind: [guid],
 					});
-					results.push({ success: true, guid: id });
+					results.push({ success: true, guid });
 				} catch (error) {
-					results.push({ success: false, guid: id, error: error.message });
+					results.push({ success: false, guid, error: error.message });
 				}
 			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
-			});
 
 			return results;
 		},
@@ -368,7 +427,7 @@ class PodcastAppDB {
 	 * @private
 	 */
 	async _ensureInit() {
-		if (!this.db) {
+		if (!this.promiser) {
 			await this.init();
 		}
 	}
@@ -377,9 +436,9 @@ class PodcastAppDB {
 	 * Close the database connection
 	 */
 	close() {
-		if (this.db) {
-			this.db.close();
-			this.db = null;
+		if (this.promiser) {
+			this.promiser('close');
+			this.promiser = null;
 		}
 	}
 
@@ -388,11 +447,13 @@ class PodcastAppDB {
 	 * @returns {Promise<void>}
 	 */
 	static async deleteDatabase() {
-		return new Promise((resolve, reject) => {
-			const request = indexedDB.deleteDatabase('PodcastDB');
-			request.onsuccess = () => resolve();
-			request.onerror = () => reject(request.error);
-		});
+		// For OPFS, we need to manually delete the file
+		try {
+			const root = await navigator.storage.getDirectory();
+			await root.removeEntry('podcast.db');
+		} catch (error) {
+			console.warn('Database file may not exist:', error);
+		}
 	}
 }
 

@@ -18,7 +18,9 @@ export class PodcastIndex extends HTMLElement {
 		this.refs.grid.innerHTML = `${this.podcasts
 			.map((podcast) => {
 				return `<a class="router-link" href="?view=podcast&feedUrl=${podcast.feedUrl}" title="${podcast.title}">
-				<img src="${podcast.image || '/assets/img/default-episode-image.webp'}" />
+				<img src="${
+					'https://proxy.thisanimus.com/?url=' + podcast.image || '/assets/img/default-episode-image.webp'
+				}" crossorigin="anonymous" />
 			</a>`;
 			})
 			.join('')}`;

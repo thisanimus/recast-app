@@ -17,6 +17,6 @@
 	},
 	"homepage": "https://github.com/thisanimus/baselayer.css#readme",
 	"devDependencies": {
-		"@11ty/eleventy-dev-server": "latest"
+		"@11ty/eleventy-dev-server": "v3.0.0-alpha.3"
 	}
 }

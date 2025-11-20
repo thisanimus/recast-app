@@ -12,6 +12,7 @@
 @import '../components/router-layout.css';
 @import '../components/router-view.css';
 @import '../components/podcast-index.css';
+@import '../components/podcast-episode.css';
 @import '../components/podcast-single.css';
 @import '../components/episode-player.css';
 @import '../components/play-pause.css';
