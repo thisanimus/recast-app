@@ -48,66 +48,62 @@ export class RouterLayout extends HTMLElement {
 
 		window.addEventListener('urlchange', () => {
 			this.q = new URLSearchParams(window.location.search);
-			if (this.q.view !== this.refs.currentView.id) {
+			if (this.q.get('view') !== this.refs.currentView.id) {
 				this.navigate();
 			}
 		});
 
-		window.addEventListener('popstate', (e) => {
-			e.preventDefault();
-			// TODO: always go "back"
-
+		window.addEventListener('popstate', () => {
 			this.q = new URLSearchParams(window.location.search);
 			this.navigate();
 		});
 	}
+
 	handleClick(e) {
 		const link = e.target.closest('a.router-link');
 		if (!link) return;
 
 		e.preventDefault();
+
 		const href = link.getAttribute('href');
 		window.history.pushState({}, '', href);
 	}
+
 	navigate() {
-		const nav = `${this.refs.currentView.id}->${this.q.get('view')}`;
+		const nextId = this.q.get('view');
+		const fromId = this.refs.currentView.id;
+		const nav = `${fromId}->${nextId}`;
 
-		const transition = transitions.find((t) => t.nav.includes(nav));
+		const t = transitions.find((t) => t.nav.includes(nav));
+		document.documentElement.style.setProperty('--exit-animation', t.exit);
+		document.documentElement.style.setProperty('--enter-animation', t.enter);
 
-		const exitingAnimation = transition?.exit || 'fade-out';
-		const enteringAnimation = transition?.enter || 'fade-in';
+		const enteringView = [...this.refs.views].find((v) => v.id === nextId);
+		if (!enteringView) return;
 
-		const enteringView = Array.from(this.refs.views).find((v) => v.id == this.q.get('view'));
-		if (enteringView) {
-			enteringView.scrollTop = 0;
-			enteringView.classList.add('active', 'entering', 'animating');
+		enteringView.scrollTop = 0;
 
-			enteringView.style.animationName = enteringAnimation;
-			enteringView.style.zIndex = 3;
-			if (this.refs.currentView.id !== enteringView.id) {
-				this.refs.currentView.classList.remove('active');
-			}
+		const currentView = this.refs.currentView;
 
-			this.refs.currentView.classList.add('exiting', 'animating');
-			this.refs.currentView.style.animationName = exitingAnimation;
-			Promise.all([
-				new Promise((resolve) => {
-					this.refs.currentView.addEventListener('animationend', resolve, { once: true });
-				}),
-				new Promise((resolve) => {
-					enteringView.addEventListener('animationend', resolve, { once: true });
-				}),
-			]).then(() => {
-				// Clean up
-				this.refs.currentView.classList.remove('exiting', 'animating');
-				this.refs.currentView.removeAttribute('style');
+		// Set view transition names BEFORE making views visible
+		currentView.style.viewTransitionName = 'old-view';
+		enteringView.style.viewTransitionName = 'new-view';
 
-				enteringView.classList.remove('entering', 'animating');
-				enteringView.removeAttribute('style');
-
+		document
+			.startViewTransition(() => {
+				// Simply swap the active states - both views should be styled to be visible
+				// when they have the active class, and the view-transition-name property
+				// will handle capturing and animating them
+				currentView.classList.remove('active');
+				enteringView.classList.add('active');
 				this.refs.currentView = enteringView;
+			})
+			.finished.then(() => {
+				// Cleanup names after transition completes
+				currentView.style.viewTransitionName = '';
+				enteringView.style.viewTransitionName = '';
 			});
-		}
 	}
 }
+
 customElements.define('router-layout', RouterLayout);

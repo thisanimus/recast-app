@@ -1,106 +1,13 @@
 router-view {
-	grid-column: 1;
 	grid-row: 1;
-
-	z-index: 1;
-	overflow: auto;
+	grid-column: 1;
+	opacity: 0;
+	pointer-events: none;
 	padding: var(--space-md);
-	&[active] {
-		z-index: 2;
-	}
+	overflow: auto;
 }
-router-view:not(.animating, .active) {
-	display: none;
-}
+
 router-view.active {
-	z-index: 2;
-}
-
-router-view.animating {
-	animation-duration: 0.5s;
-	animation-fill-mode: both;
-}
-
-@keyframes from-right {
-	from {
-		transform: translateX(100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-
-@keyframes to-right {
-	from {
-		transform: translateX(0);
-		opacity: 1;
-	}
-	to {
-		transform: translateX(50%);
-		opacity: 0;
-	}
-}
-
-@keyframes from-left {
-	from {
-		transform: translateX(-100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-
-@keyframes to-left {
-	from {
-		transform: translateX(0);
-		opacity: 1;
-	}
-	to {
-		transform: translateX(-50%);
-		opacity: 0;
-	}
-}
-
-@keyframes fade-in {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-@keyframes fade-out {
-	from {
-		opacity: 1;
-	}
-	to {
-		opacity: 0;
-	}
-}
-
-@keyframes from-back {
-	from {
-		transform: scale(0.95);
-		opacity: 0;
-	}
-	to {
-		transform: scale(1);
-		opacity: 1;
-	}
-}
-
-@keyframes to-back {
-	from {
-		transform: scale(1);
-		opacity: 1;
-	}
-	to {
-		transform: scale(0.95);
-		opacity: 0;
-	}
+	opacity: 1;
+	pointer-events: auto;
 }
