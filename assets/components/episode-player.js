@@ -78,6 +78,7 @@ export class EpisodePlayer extends HTMLElement {
 				this.setAttribute('minimized', 'true');
 			},
 		});
+
 		this.refs.audio.addEventListener('pause', () => {
 			const playPauses = document.querySelectorAll('play-pause');
 			playPauses.forEach((playPause) => {
@@ -182,10 +183,7 @@ export class EpisodePlayer extends HTMLElement {
 	}
 
 	render() {
-		const imageSrc =
-			'https://proxy.thisanimus.com/?url=' + this.episode.image ||
-			'https://proxy.thisanimus.com/?url=' + this.podcast.image ||
-			'/assets/img/default-episode-image.webp';
+		const imageSrc = this.episode.image || this.podcast.image || '/assets/img/default-episode-image.webp';
 		this.refs.image.src = imageSrc;
 		this.refs.imageMini.src = imageSrc;
 		this.refs.title.textContent = this.episode.title;

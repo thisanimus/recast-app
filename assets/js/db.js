@@ -4,6 +4,7 @@
  * @property {string} link - The podcast website link
  * @property {string} feedUrl - The podcast RSS feed URL (unique key)
  * @property {string} description - The podcast description
+ * @property {string} summary - The podcast description
  * @property {string} pubDate - The podcast publication date
  * @property {string} image - The podcast cover image URL
  * @property {string} author - The podcast author/creator

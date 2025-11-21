@@ -1,15 +1,18 @@
-.episode-player-layout {
+episode-player {
+	box-sizing: border-box;
 	position: fixed;
 	z-index: 10;
-	bottom: 0;
+	top: 0;
 	height: 100%;
 	width: 100%;
+	clip-path: inset(0 0 0 0 round 0);
+	transition: clip-path 350ms, translate 350ms;
+
 	background: var(--color-background-intense);
 	display: grid;
 	grid-template-rows: 1fr 5rem;
 	padding: var(--space-md);
-	clip-path: inset(0 0 0 0 round 0);
-	transition: clip-path 350ms;
+
 	img {
 		aspect-ratio: 1 /1;
 		background: var(--color-ui-muted);
@@ -79,8 +82,9 @@
 }
 episode-player {
 	&[minimized='true'] {
+		translate: 0 calc(var(--router-nav-height) * -1);
+		clip-path: inset(calc(100% - 0.5rem - 4rem) 0.5rem 0.5rem 0.5rem round 0.5rem);
 		.episode-player-layout {
-			clip-path: inset(calc(100% - 0.5rem - 4rem) 0.5rem 0.5rem 0.5rem round 0.5rem);
 		}
 		.player-buttons {
 			column-gap: var(--space-md);

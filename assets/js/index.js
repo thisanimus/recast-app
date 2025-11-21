@@ -1,5 +1,6 @@
 import '../components/router-layout.js';
 import '../components/router-view.js';
+import '../components/router-nav.js';
 import '../components/episode-player.js';
 import '../components/play-pause.js';
 import '../components/podcast-index.js';
@@ -24,6 +25,12 @@ import { Settings } from './settings.js';
 	};
 })();
 
+document.querySelectorAll('img').forEach((img) => {
+	img.addEventListener('error', () => {
+		img.src = 'assets/img/default-episode-image.webp';
+	});
+});
+
 export const refreshAll = async () => {
 	const podcasts = await Db.podcasts.readAll();
 
@@ -41,16 +48,30 @@ export const refreshAll = async () => {
 
 //refreshAll();
 
-await Settings.requestPersistentStorage();
+const persistButton = document.getElementById('persist');
+if (persistButton) {
+	persistButton.addEventListener('click', async (e) => {
+		await Settings.requestPersistentStorage();
+	});
+}
 const podcasts = [
 	'https://deepspacerobots.com/jukebox/feed.xml',
 	'https://feeds.simplecast.com/BqbsxVfO',
 	'https://www.thisamericanlife.org/podcast/rss.xml',
 ];
 
-const { podcast, episodes } = await feed('https://feeds.simplecast.com/BqbsxVfO');
+const { podcast, episodes } = await feed('https://deepspacerobots.com/jukebox/feed.xml');
 
 if (podcast && episodes) {
 	Db.podcasts.upsert(podcast);
 	Db.episodes.upsert(episodes);
 }
+
+/*
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker
+		.register('/service-worker.js')
+		.then((reg) => console.log('Service Worker registered', reg))
+		.catch((err) => console.error('Service Worker registration failed', err));
+}
+*/

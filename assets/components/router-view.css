@@ -1,9 +1,8 @@
 router-view {
 	grid-column: 1;
 	grid-row: 1;
-	background: var(--color-background);
+
 	z-index: 1;
-	max-height: 100dvh;
 	overflow: auto;
 	padding: var(--space-md);
 	&[active] {

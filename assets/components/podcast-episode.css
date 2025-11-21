@@ -11,8 +11,11 @@
 		grid-template-columns: 1fr auto;
 		gap: var(--space-md);
 		width: 100%;
-		border-bottom: var(--border-width) solid var(--color-ui-muted);
+		border-bottom: 0.5px solid var(--color-background-muted);
 		padding: var(--space-sm) 0;
+	}
+	.title {
+		line-height: 1.2;
 	}
 	.prepend {
 		text-transform: uppercase;

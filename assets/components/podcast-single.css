@@ -1,0 +1,16 @@
+podcast-single {
+	header {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-md);
+		.image {
+			max-width: 12rem;
+			border-radius: 10%;
+		}
+		.title {
+			font-size: 1.5rem;
+			font-weight: 600;
+		}
+	}
+}

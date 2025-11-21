@@ -11,7 +11,7 @@ class PodcastSingle extends HTMLElement {
 			title: this.querySelector('.title'),
 			category: this.querySelector('.category'),
 			author: this.querySelector('.author'),
-			description: this.querySelector('.decription'),
+			description: this.querySelector('.description'),
 			episodes: this.querySelector('.episodes'),
 		};
 		this.podcast = {
@@ -19,6 +19,7 @@ class PodcastSingle extends HTMLElement {
 			link: null,
 			feedUrl: null,
 			description: null,
+			summary: null,
 			pubDate: null,
 			image: null,
 			author: null,
@@ -103,6 +104,12 @@ class PodcastSingle extends HTMLElement {
 			</li>`;
 	}
 	render() {
+		const imageSrc = this.podcast.image || '/assets/img/default-episode-image.webp';
+		this.refs.image.src = imageSrc;
+		this.refs.title.textContent = this.podcast.title;
+		this.refs.author.textContent = this.podcast.author;
+		this.refs.category.textContent = this.podcast.category;
+		this.refs.description.textContent = this.podcast.summary;
 		this.refs.episodes.innerHTML = `${this.episodes.map((episode) => this.episodeTemplate(episode)).join('')}`;
 	}
 }

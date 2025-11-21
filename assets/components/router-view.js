@@ -1,4 +1,4 @@
-export class RouterView extends HTMLElement {
+class RouterView extends HTMLElement {
 	constructor() {
 		super();
 	}
