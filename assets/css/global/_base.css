@@ -36,6 +36,7 @@
 	--font-serif: Palatino, 'Palatino Linotype', 'Palatino LT STD', 'Book Antiqua', Georgia, serif;
 
 	--router-nav-height: 5rem;
+	--player-minimized-height: 4rem;
 }
 html {
 	font-size: 0.9rem;

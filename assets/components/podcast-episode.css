@@ -5,15 +5,14 @@
 }
 
 .podcast-episode {
-	button {
-		display: grid;
-		align-items: center;
-		grid-template-columns: 1fr auto;
-		gap: var(--space-md);
-		width: 100%;
-		border-bottom: 0.5px solid var(--color-background-muted);
-		padding: var(--space-sm) 0;
-	}
+	display: grid;
+	align-items: center;
+	grid-template-columns: 1fr auto auto;
+	gap: var(--space-md);
+	width: 100%;
+	border-bottom: 0.5px solid var(--color-background-muted);
+	padding: var(--space-sm) 0;
+
 	.title {
 		line-height: 1.2;
 	}
@@ -27,6 +26,14 @@
 	.append {
 		font-size: 0.8rem;
 		color: var(--color-text-muted);
+	}
+	.download {
+		width: 2.5rem;
+		height: 2.5rem;
+		padding: 0.65rem;
+		> * {
+			pointer-events: none;
+		}
 	}
 
 	.icon-wrapper {

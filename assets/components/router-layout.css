@@ -2,7 +2,7 @@ router-layout {
 	box-sizing: border-box;
 	display: grid;
 	height: 100dvh;
-	grid-template-rows: 1fr var(--router-nav-height) var(--router-nav-height);
+	grid-template-rows: 1fr var(--player-minimized-height) var(--router-nav-height);
 	overflow: hidden;
 }
 

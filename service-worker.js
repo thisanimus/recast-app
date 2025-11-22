@@ -1,11 +1,12 @@
 // service-worker.js
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v1.4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
 
 // Add your local files here
 const STATIC_FILES = [
+	/*
 	'/assets/appicon/apple-touch-icon.png',
 	'/assets/appicon/icon-192x192.png',
 	'/assets/appicon/icon-512x512-maskable.png',
@@ -53,9 +54,11 @@ const STATIC_FILES = [
 	'/assets/js/settings.js',
 	'/assets/js/shared.js',
 	'/assets/js/utilities.js',
+	*/
 ];
 
 // Install event - cache static files
+
 self.addEventListener('install', (event) => {
 	console.log('Service Worker installing...');
 
@@ -101,6 +104,7 @@ self.addEventListener('fetch', (event) => {
 	const url = new URL(request.url);
 
 	// Handle static files (HTML, CSS, JS)
+	/*
 	if (
 		STATIC_FILES.includes(url.pathname) ||
 		request.destination === 'style' ||
@@ -131,6 +135,7 @@ self.addEventListener('fetch', (event) => {
 		);
 		return;
 	}
+		*/
 
 	// Handle images - cache on first access
 	if (request.destination === 'image') {
@@ -164,8 +169,21 @@ self.addEventListener('fetch', (event) => {
 	// Handle audio - cache only when explicitly requested
 	if (request.destination === 'audio') {
 		event.respondWith(
-			caches.match(request).then((response) => {
-				return response || fetch(request);
+			caches.open(AUDIO_CACHE).then((cache) => {
+				return cache.match(request).then((response) => {
+					return (
+						response ||
+						fetch(request).then((fetchResponse) => {
+							// Optionally cache audio on first play
+							/*
+                    if (fetchResponse.ok) {
+                        cache.put(request, fetchResponse.clone());
+                    }
+												*/
+							return fetchResponse;
+						})
+					);
+				});
 			})
 		);
 		return;
@@ -185,15 +203,16 @@ self.addEventListener('message', (event) => {
 				.open(AUDIO_CACHE)
 				.then((cache) => {
 					return fetch(audioUrl).then((response) => {
+						const messagePort = event.ports[0];
+
 						if (response.ok) {
 							cache.put(audioUrl, response.clone());
-							// Notify the client that caching is complete
-							event.ports[0].postMessage({
+							messagePort?.postMessage({
 								success: true,
 								url: audioUrl,
 							});
 						} else {
-							event.ports[0].postMessage({
+							messagePort?.postMessage({
 								success: false,
 								url: audioUrl,
 								error: 'Fetch failed',
@@ -202,7 +221,7 @@ self.addEventListener('message', (event) => {
 					});
 				})
 				.catch((error) => {
-					event.ports[0].postMessage({
+					event.ports[0]?.postMessage({
 						success: false,
 						url: audioUrl,
 						error: error.message,

@@ -4,8 +4,14 @@ podcast-index {
 		grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
 		gap: 0.5rem;
 		> * {
+			aspect-ratio: 1/1;
+			background: var(--color-ui-muted);
 			border-radius: var(--border-radius);
 			overflow: hidden;
 		}
+	}
+	.add-link {
+		padding: 25%;
+		color: var(--color-text-muted);
 	}
 }

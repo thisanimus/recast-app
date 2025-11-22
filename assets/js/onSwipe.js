@@ -1,4 +1,4 @@
-export const onSwipe = (element, { onSwipeUp, onSwipeDown, minDistance = 50, maxTime = 500 } = {}) => {
+export const onSwipe = (element, { onSwipeUp, onSwipeDown, minDistance = 20, maxTime = 500 } = {}) => {
 	const touch = { startY: 0, startTime: 0 };
 
 	function start(e) {
@@ -19,7 +19,7 @@ export const onSwipe = (element, { onSwipeUp, onSwipeDown, minDistance = 50, max
 		if (distY > minDistance && typeof onSwipeDown === 'function') {
 			onSwipeDown();
 		}
-
+		console.log({ distY, min: -minDistance });
 		// Swipe up
 		if (distY < -minDistance && typeof onSwipeUp === 'function') {
 			onSwipeUp();

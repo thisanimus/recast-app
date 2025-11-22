@@ -3,7 +3,7 @@
  * @typedef {import('./db.js').Episode} Episode
  */
 
-export async function feed(feedUrl) {
+export async function fetchPodcast(feedUrl) {
 	try {
 		const response = await fetch('https://proxy.thisanimus.com/?url=' + feedUrl);
 		if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
@@ -104,3 +104,61 @@ function parseDuration(str) {
 	if (parts.length === 2) return parts[0] * 60 + parts[1];
 	return parts[0];
 }
+
+export const getFeedUrlFromItunes = async (url) => {
+	// Extract podcast ID from URL
+	const match = url.match(/id(\d+)/);
+	if (!match) return null;
+
+	const podcastId = match[1];
+	const apiUrl = `https://itunes.apple.com/lookup?id=${podcastId}&entity=podcast`;
+
+	const response = await fetch(apiUrl);
+	const data = await response.json();
+
+	return data.results[0]?.feedUrl;
+};
+
+export const addPodcastFromFeedUrl = async (feedUrl) => {
+	const { podcast, episodes } = await fetchPodcast(feedUrl);
+
+	if (podcast && episodes) {
+		Db.podcasts.upsert(podcast);
+		Db.episodes.upsert(episodes);
+	}
+};
+
+export const refreshAll = async () => {
+	const podcasts = await Db.podcasts.readAll();
+
+	const promiseArray = [];
+	for (const podcast of podcasts) {
+		promiseArray.push(feed(podcast.feedUrl));
+	}
+	const result = await Promise.all(promiseArray);
+
+	result.forEach((p) => {
+		Db.podcasts.upsert(p.podcast);
+		Db.episodes.upsert(p.episodes);
+	});
+};
+
+export const cacheAudio = async (audioUrl) => {
+	if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+		const messageChannel = new MessageChannel();
+
+		return new Promise((resolve, reject) => {
+			messageChannel.port1.onmessage = (event) => {
+				if (event.data.success) {
+					console.log('Audio cached:', event.data.url);
+					resolve(event.data);
+				} else {
+					console.error('Audio caching failed:', event.data.error);
+					reject(event.data);
+				}
+			};
+
+			navigator.serviceWorker.controller.postMessage({ type: 'CACHE_AUDIO', url: audioUrl }, [messageChannel.port2]);
+		});
+	}
+};

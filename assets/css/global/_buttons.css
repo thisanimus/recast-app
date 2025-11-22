@@ -6,6 +6,7 @@ button,
 	all: unset;
 	box-sizing: border-box;
 	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
 	&:hover,
 	&:focus {
 		color: var(--color-link-hover);

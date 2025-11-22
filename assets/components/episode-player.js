@@ -25,6 +25,7 @@ export class EpisodePlayer extends HTMLElement {
 			skipBack: this.querySelector('#skip-back'),
 			skipForward: this.querySelector('#skip-forward'),
 			playbackRate: this.querySelector('#playback-rate'),
+			toggle: this.querySelector('#toggle'),
 		};
 		this.podcast = {
 			title: null,
@@ -65,6 +66,9 @@ export class EpisodePlayer extends HTMLElement {
 			if (name == 'guid') {
 				Settings.setProp('currentEpisode', newValue);
 				this.loadEpisode();
+			}
+			if (name == 'minimized') {
+				this.refs.toggle.title = this.minimized == 'true' ? 'Expand' : 'Minimize';
 			}
 		}
 	}
@@ -109,6 +113,9 @@ export class EpisodePlayer extends HTMLElement {
 		this.refs.skipBack.addEventListener('click', (e) => {
 			this.seek(-10);
 		});
+		this.refs.toggle.addEventListener('click', (e) => {
+			this.setAttribute('minimized', this.minimized == 'true' ? 'false' : 'true');
+		});
 
 		// time
 		this.refs.timeRange.addEventListener('input', () => {
@@ -150,10 +157,12 @@ export class EpisodePlayer extends HTMLElement {
 		}
 		if (this.guid) {
 			const episode = await Db.episodes.read(this.guid);
-			const podcast = await Db.podcasts.read(episode.podcast);
-			if (episode && podcast) {
-				this.episode = episode;
-				this.podcast = podcast;
+			if (episode) {
+				const podcast = await Db.podcasts.read(episode.podcast);
+				if (episode && podcast) {
+					this.episode = episode;
+					this.podcast = podcast;
+				}
 			}
 		}
 		this.render();

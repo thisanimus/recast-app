@@ -4,6 +4,7 @@ router-view {
 	opacity: 0;
 	pointer-events: none;
 	padding: var(--space-md);
+	padding-block-end: unset;
 	overflow: auto;
 }
 

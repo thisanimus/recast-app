@@ -19,8 +19,16 @@
 				<podcast-index>
 					<div class="grid"></div>
 				</podcast-index>
-				<a class="router-link" href="?view=podcast">Podcast</a>
-				<a class="router-link" href="?view=episode">Episode</a>
+			</router-view>
+			<router-view id="add">
+				<podcast-search>
+					<form name="search-form">
+						<label for="search" class="hidden">Search</label>
+						<input id="search" type="search" placeholder="Enter an RSS feed url, or an Apple Podcasts url" />
+						<button>Search</button>
+					</form>
+					<div class="results"></div>
+				</podcast-search>
 			</router-view>
 			<router-view id="podcast">
 				<podcast-single>
@@ -34,6 +42,7 @@
 							</div>
 							<div class="title"></div>
 						</div>
+						<button id="subscription">+ Subscribe</button>
 						<div class="description"></div>
 					</header>
 
@@ -120,11 +129,23 @@
 						</svg>
 					</button>
 					<button id="playback-rate" title="Playback Rate">1x</button>
+					<button id="toggle" title="Open Player">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+							<path
+								fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="48"
+								d="M112 328l144-144 144 144"
+							/>
+						</svg>
+					</button>
 				</div>
 			</episode-player>
 			<router-nav>
 				<a class="router-link" href="?view=add">
-					<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 						<path
 							d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm80 224h-64v64a16 16 0 01-32 0v-64h-64a16 16 0 010-32h64v-64a16 16 0 0132 0v64h64a16 16 0 010 32z"
 						/>
@@ -132,7 +153,7 @@
 					<div class="title">Add New</div>
 				</a>
 				<a class="router-link" href="?view=index">
-					<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 						<path
 							d="M204 240H68a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 240H308a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM204 480H68a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 480H308a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36z"
 						/>
@@ -140,7 +161,7 @@
 					<div class="title">Podcasts</div>
 				</a>
 				<a class="router-link" href="?view=settings">
-					<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 						<path
 							d="M64 144h226.75a48 48 0 0090.5 0H448a16 16 0 000-32h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32zM448 368h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32h226.75a48 48 0 0090.5 0H448a16 16 0 000-32zM448 240H221.25a48 48 0 00-90.5 0H64a16 16 0 000 32h66.75a48 48 0 0090.5 0H448a16 16 0 000-32z"
 						/>

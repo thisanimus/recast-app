@@ -12,11 +12,12 @@
 @import '../components/router-layout.css';
 @import '../components/router-view.css';
 @import '../components/router-nav.css';
-@import '../components/podcast-index.css';
-@import '../components/podcast-single.css';
 @import '../components/podcast-episode.css';
 @import '../components/episode-player.css';
 @import '../components/play-pause.css';
+
+@import '../views/podcast-index.css';
+@import '../views/podcast-single.css';
 a {
 	display: block;
 }

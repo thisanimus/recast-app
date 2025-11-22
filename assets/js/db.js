@@ -83,36 +83,31 @@ class PodcastAppDB {
 	 */
 	podcasts = {
 		/**
-		 * Upsert (create or update) one or more podcasts
-		 * @param {Podcast|Podcast[]} data - Single podcast or array of podcasts
-		 * @returns {Promise<Array<{success: boolean, feedUrl: string, error?: string}>>}
+		 * Upsert (create or update) a single podcast
+		 * @param {Podcast} data - Single podcast object
+		 * @returns {Promise<{success: boolean, feedUrl: string, error?: string}>}
 		 */
 		upsert: async (data) => {
 			await this._ensureInit();
-			const items = Array.isArray(data) ? data : [data];
 			const tx = this.db.transaction(['podcasts'], 'readwrite');
 			const store = tx.objectStore('podcasts');
 
-			const results = [];
-			for (const item of items) {
-				try {
-					await new Promise((resolve, reject) => {
-						const request = store.put(item);
-						request.onsuccess = () => resolve(request.result);
-						request.onerror = () => reject(request.error);
-					});
-					results.push({ success: true, feedUrl: item.feedUrl });
-				} catch (error) {
-					results.push({ success: false, feedUrl: item.feedUrl, error: error.message });
-				}
+			try {
+				await new Promise((resolve, reject) => {
+					const request = store.put(data);
+					request.onsuccess = () => resolve(request.result);
+					request.onerror = () => reject(request.error);
+				});
+
+				await new Promise((resolve, reject) => {
+					tx.oncomplete = () => resolve();
+					tx.onerror = () => reject(tx.error);
+				});
+
+				return { success: true, feedUrl: data.feedUrl };
+			} catch (error) {
+				return { success: false, feedUrl: data.feedUrl, error: error.message };
 			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
-			});
-
-			return results;
 		},
 
 		/**
@@ -156,36 +151,50 @@ class PodcastAppDB {
 		},
 
 		/**
-		 * Delete one or more podcasts by feedUrl
-		 * @param {string|string[]} feedUrls - Single feedUrl or array of feedUrls
-		 * @returns {Promise<Array<{success: boolean, feedUrl: string, error?: string}>>}
+		 * Delete a single podcast and all its episodes
+		 * @param {string} feedUrl - The podcast's feedUrl
+		 * @returns {Promise<{success: boolean, feedUrl: string, deletedEpisodes: number, error?: string}>}
 		 */
-		delete: async (feedUrls) => {
+		delete: async (feedUrl) => {
 			await this._ensureInit();
-			const urls = Array.isArray(feedUrls) ? feedUrls : [feedUrls];
-			const tx = this.db.transaction(['podcasts'], 'readwrite');
-			const store = tx.objectStore('podcasts');
+			const tx = this.db.transaction(['podcasts', 'episodes'], 'readwrite');
+			const podcastStore = tx.objectStore('podcasts');
+			const episodeStore = tx.objectStore('episodes');
+			const episodeIndex = episodeStore.index('podcast');
 
-			const results = [];
-			for (const url of urls) {
-				try {
+			try {
+				// Delete the podcast
+				await new Promise((resolve, reject) => {
+					const request = podcastStore.delete(feedUrl);
+					request.onsuccess = () => resolve();
+					request.onerror = () => reject(request.error);
+				});
+
+				// Get all episodes for this podcast
+				const episodes = await new Promise((resolve, reject) => {
+					const request = episodeIndex.getAll(feedUrl);
+					request.onsuccess = () => resolve(request.result);
+					request.onerror = () => reject(request.error);
+				});
+
+				// Delete all episodes
+				for (const episode of episodes) {
 					await new Promise((resolve, reject) => {
-						const request = store.delete(url);
+						const request = episodeStore.delete(episode.guid);
 						request.onsuccess = () => resolve();
 						request.onerror = () => reject(request.error);
 					});
-					results.push({ success: true, feedUrl: url });
-				} catch (error) {
-					results.push({ success: false, feedUrl: url, error: error.message });
 				}
+
+				await new Promise((resolve, reject) => {
+					tx.oncomplete = () => resolve();
+					tx.onerror = () => reject(tx.error);
+				});
+
+				return { success: true, feedUrl, deletedEpisodes: episodes.length };
+			} catch (error) {
+				return { success: false, feedUrl, deletedEpisodes: 0, error: error.message };
 			}
-
-			await new Promise((resolve, reject) => {
-				tx.oncomplete = () => resolve();
-				tx.onerror = () => reject(tx.error);
-			});
-
-			return results;
 		},
 	};
 
@@ -246,7 +255,7 @@ class PodcastAppDB {
 		 * Upsert (create or update) one or more episodes
 		 * @param {string} guid - the ID of the episode
 		 * @param {string} key - the prop key to update
-		 * @param {string|number} value - the new prop value
+		 * @param {string|number|boolean} value - the new prop value
 		 * @returns {Promise<Episode>}
 		 */
 		updateProp: async (guid, key, value) => {

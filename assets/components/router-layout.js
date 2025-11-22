@@ -10,22 +10,22 @@ const transitions = [
 		enter: 'from-left',
 	},
 	{
-		nav: ['episode->search', 'podcast->search'],
+		nav: ['episode->add', 'podcast->add'],
 		exit: 'to-right',
 		enter: 'from-back',
 	},
 	{
-		nav: ['search->podcast', 'search->episode'],
+		nav: ['add->podcast', 'add->episode'],
 		exit: 'to-back',
 		enter: 'from-right',
 	},
 	{
-		nav: ['index->search'],
+		nav: ['index->add'],
 		exit: 'to-left',
 		enter: 'from-back',
 	},
 	{
-		nav: ['search->index'],
+		nav: ['add->index'],
 		exit: 'to-back',
 		enter: 'from-left',
 	},
@@ -34,7 +34,7 @@ const transitions = [
 export class RouterLayout extends HTMLElement {
 	constructor() {
 		super();
-		this.q = new URLSearchParams(window.location.search);
+		this.q = new URLSearchParams(window.location.seach);
 		this.refs = {
 			views: this.querySelectorAll('router-view'),
 			currentView: this.querySelector('router-view.active'),
@@ -69,21 +69,44 @@ export class RouterLayout extends HTMLElement {
 		window.history.pushState({}, '', href);
 	}
 
-	navigate() {
+	async navigate() {
 		const nextId = this.q.get('view');
 		const fromId = this.refs.currentView.id;
 		const nav = `${fromId}->${nextId}`;
+
+		const enteringView = [...this.refs.views].find((v) => v.id === nextId);
+		if (!enteringView) return;
 
 		const t = transitions.find((t) => t.nav.includes(nav));
 		document.documentElement.style.setProperty('--exit-animation', t.exit);
 		document.documentElement.style.setProperty('--enter-animation', t.enter);
 
-		const enteringView = [...this.refs.views].find((v) => v.id === nextId);
-		if (!enteringView) return;
-
 		enteringView.scrollTop = 0;
 
 		const currentView = this.refs.currentView;
+
+		// Wait for the entering view to be loaded before starting transition
+		if (enteringView.hasAttribute('loading')) {
+			await new Promise((resolve) => {
+				const observer = new MutationObserver((mutations) => {
+					if (!enteringView.hasAttribute('loading')) {
+						observer.disconnect();
+						resolve();
+					}
+				});
+
+				observer.observe(enteringView, {
+					attributes: true,
+					attributeFilter: ['loading'],
+				});
+
+				// If it's already loaded by the time we check, resolve immediately
+				if (!enteringView.hasAttribute('loading')) {
+					observer.disconnect();
+					resolve();
+				}
+			});
+		}
 
 		// Set view transition names BEFORE making views visible
 		currentView.style.viewTransitionName = 'old-view';
@@ -91,9 +114,6 @@ export class RouterLayout extends HTMLElement {
 
 		document
 			.startViewTransition(() => {
-				// Simply swap the active states - both views should be styled to be visible
-				// when they have the active class, and the view-transition-name property
-				// will handle capturing and animating them
 				currentView.classList.remove('active');
 				enteringView.classList.add('active');
 				this.refs.currentView = enteringView;
