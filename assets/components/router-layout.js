@@ -34,7 +34,7 @@ const transitions = [
 export class RouterLayout extends HTMLElement {
 	constructor() {
 		super();
-		this.q = new URLSearchParams(window.location.seach);
+		this.q = new URLSearchParams(window.location.search);
 		this.refs = {
 			views: this.querySelectorAll('router-view'),
 			currentView: this.querySelector('router-view.active'),
