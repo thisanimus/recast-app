@@ -206,6 +206,7 @@ export class EpisodePlayer extends HTMLElement {
 		this.refs.audio.src = this.episode.audio;
 		this.refs.audio.load();
 		this.refs.audio.currentTime = this.episode.progress;
+
 		setLockscreenMedia({
 			title: this.episode.title,
 			artist: this.podcast.author,
