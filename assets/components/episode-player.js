@@ -1,5 +1,6 @@
 import { Db } from '../js/db.js';
 import { onSwipe } from '../js/onSwipe.js';
+import { setLockscreenMedia } from '../js/podcast.js';
 import { Settings } from '../js/settings.js';
 import { secToTime } from '../js/utilities.js';
 
@@ -205,6 +206,14 @@ export class EpisodePlayer extends HTMLElement {
 		this.refs.audio.src = this.episode.audio;
 		this.refs.audio.load();
 		this.refs.audio.currentTime = this.episode.progress;
+		setLockscreenMedia({
+			title: this.episode.title,
+			artist: this.podcast.author,
+			podcast: this.podcast.title,
+			image: imageSrc,
+			w: this.refs.image.naturalWidth,
+			h: this.refs.image.naturalHeight,
+		});
 	}
 }
 customElements.define('episode-player', EpisodePlayer);
