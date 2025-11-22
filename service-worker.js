@@ -1,60 +1,61 @@
 // service-worker.js
-const CACHE_VERSION = 'v1.4';
+const CACHE_VERSION = 'v1.5';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
 
 // Add your local files here
 const STATIC_FILES = [
-	/*
-	'/assets/appicon/apple-touch-icon.png',
-	'/assets/appicon/icon-192x192.png',
-	'/assets/appicon/icon-512x512-maskable.png',
-	'/assets/appicon/icon-512x512.png',
-	'/assets/appicon/icon-maskable.svg',
-	'/assets/appicon/icon.ico',
-	'/assets/appicon/icon.png',
-	'/assets/appicon/icon.svg',
-	'/assets/components/episode-player.css',
-	'/assets/components/episode-player.js',
-	'/assets/components/play-pause.css',
-	'/assets/components/play-pause.js',
-	'/assets/components/podcast-episode.css',
-	'/assets/components/podcast-index.css',
-	'/assets/components/podcast-index.js',
-	'/assets/components/podcast-single.css',
-	'/assets/components/podcast-single.js',
-	'/assets/components/router-layout.css',
-	'/assets/components/router-layout.js',
-	'/assets/components/router-nav.js',
-	'/assets/components/router-view.css',
-	'/assets/components/router-view.js',
-	'/assets/css/global/_base.css',
-	'/assets/css/global/_buttons.css',
-	'/assets/css/global/_code.css',
-	'/assets/css/global/_color-mode-auto.css',
-	'/assets/css/global/_dialog.css',
-	'/assets/css/global/_forms.css',
-	'/assets/css/global/_media.css',
-	'/assets/css/global/_range.css',
-	'/assets/css/global/_table.css',
-	'/assets/css/global/_typography.css',
-	'/assets/css/global/.DS_Store',
-	'/assets/css/style.css',
-	'/assets/img/default-episode-image.webp',
-	'/assets/img/screenshot-1.png',
-	'/assets/img/screenshot-2.png',
-	'/assets/img/screenshot-3.png',
-	'/assets/img/screenshot.psd',
-	'/assets/js/db.js',
-	'/assets/js/feed.js',
-	'/assets/js/icons.js',
-	'/assets/js/index.js',
-	'/assets/js/onSwipe.js',
-	'/assets/js/settings.js',
-	'/assets/js/shared.js',
-	'/assets/js/utilities.js',
-	*/
+	'./css/style.css',
+	'./css/global/_typography.css',
+	'./css/global/_code.css',
+	'./css/global/_color-mode-auto.css',
+	'./css/global/_forms.css',
+	'./css/global/_table.css',
+	'./css/global/_media.css',
+	'./css/global/_range.css',
+	'./css/global/_base.css',
+	'./css/global/_dialog.css',
+	'./css/global/_buttons.css',
+	'./js/icons.js',
+	'./js/onSwipe.js',
+	'./js/db.js',
+	'./js/index.js',
+	'./js/podcast.js',
+	'./js/utilities.js',
+	'./js/shared.js',
+	'./js/settings.js',
+	'./img/default-episode-image.webp',
+	'./img/screenshot.psd',
+	'./img/screenshot-2.png',
+	'./img/screenshot-3.png',
+	'./img/screenshot-1.png',
+	'./components/play-pause.css',
+	'./components/router-nav.css',
+	'./components/network-status.js',
+	'./components/episode-player.css',
+	'./components/router-nav.js',
+	'./components/router-view.css',
+	'./components/router-layout.css',
+	'./components/episode-player.js',
+	'./components/podcast-episode.css',
+	'./components/router-view.js',
+	'./components/router-layout.js',
+	'./components/podcast-episode.js',
+	'./components/play-pause.js',
+	'./appicon/icon-192x192.png',
+	'./appicon/icon.png',
+	'./appicon/apple-touch-icon.png',
+	'./appicon/icon.svg',
+	'./appicon/icon.ico',
+	'./appicon/icon-512x512-maskable.png',
+	'./appicon/icon-512x512.png',
+	'./appicon/icon-maskable.svg',
+	'./views/podcast-single.css',
+	'./views/podcast-search.js',
+	'./views/podcast-index.css',
+	'./views/podcast-index.js',
+	'./views/podcast-single.js',
 ];
 
 // Install event - cache static files
@@ -104,7 +105,7 @@ self.addEventListener('fetch', (event) => {
 	const url = new URL(request.url);
 
 	// Handle static files (HTML, CSS, JS)
-	/*
+
 	if (
 		STATIC_FILES.includes(url.pathname) ||
 		request.destination === 'style' ||
@@ -135,7 +136,6 @@ self.addEventListener('fetch', (event) => {
 		);
 		return;
 	}
-		*/
 
 	// Handle images - cache on first access
 	if (request.destination === 'image') {
