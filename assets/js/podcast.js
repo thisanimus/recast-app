@@ -5,7 +5,7 @@
 
 export async function fetchPodcast(feedUrl) {
 	try {
-		const response = await fetch('https://proxy.thisanimus.com/?url=' + feedUrl);
+		const response = await fetch('https://api.allorigins.win/get?url=' + feedUrl);
 		if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
 		const xmlText = await response.text();

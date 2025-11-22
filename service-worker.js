@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.008';
+const CACHE_VERSION = 'v0.009';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
@@ -175,7 +175,7 @@ self.addEventListener('fetch', (event) => {
 				return cache.match(request).then((response) => {
 					return (
 						response ||
-						fetch(`https://proxy.thisanimus.com?url=` + request, {}).then((fetchResponse) => {
+						fetch(`https://api.allorigins.win/get?url=` + request, {}).then((fetchResponse) => {
 							// Optionally cache audio on first play
 							/*
                     if (fetchResponse.ok) {
