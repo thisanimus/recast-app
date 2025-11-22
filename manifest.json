@@ -4,8 +4,8 @@
 	"description": "A free podcast app: ad-free, subscription-free, tracking-free, cost-free. Just free.",
 	"start_url": "https://recastapp.netlify.app",
 	"id": "https://recastapp.netlify.app",
-	"display": "fullscreen",
-	"background_color": "#000",
+	"display": "standalone",
+	"background_color": "#20242c",
 	"theme_color": "#000",
 	"orientation": "portrait-primary",
 
