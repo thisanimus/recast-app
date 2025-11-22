@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.004';
+const CACHE_VERSION = 'v0.005';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images`;
 const AUDIO_CACHE = `audio`;
