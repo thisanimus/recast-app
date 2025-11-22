@@ -175,9 +175,7 @@ self.addEventListener('fetch', (event) => {
 				return cache.match(request).then((response) => {
 					return (
 						response ||
-						fetch(request, {
-							headers: { Range: '' }, // Remove range header
-						}).then((fetchResponse) => {
+						fetch(`https://proxy.thisanimus.com?url=` + request, {}).then((fetchResponse) => {
 							// Optionally cache audio on first play
 							/*
                     if (fetchResponse.ok) {
