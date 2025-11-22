@@ -1,8 +1,8 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.001';
+const CACHE_VERSION = 'v0.004';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const IMAGE_CACHE = `images-${CACHE_VERSION}`;
-const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
+const IMAGE_CACHE = `images`;
+const AUDIO_CACHE = `audio`;
 
 // Add your local files here
 const STATIC_FILES = [
@@ -61,7 +61,6 @@ const STATIC_FILES = [
 ];
 
 // Install event - cache static files
-
 self.addEventListener('install', (event) => {
 	console.log('Service Worker installing...');
 
@@ -101,13 +100,78 @@ self.addEventListener('activate', (event) => {
 	);
 });
 
+// Helper function to handle range requests from cached audio
+async function createRangeResponse(cachedResponse, request) {
+	try {
+		const data = await cachedResponse.arrayBuffer();
+		const range = request.headers.get('range');
+
+		if (!range) {
+			return cachedResponse;
+		}
+
+		const parts = range.replace(/bytes=/, '').split('-');
+		const start = parseInt(parts[0], 10);
+		const end = parts[1] ? parseInt(parts[1], 10) : data.byteLength - 1;
+		const chunk = data.slice(start, end + 1);
+
+		const contentType = cachedResponse.headers.get('content-type') || 'audio/mpeg';
+
+		return new Response(chunk, {
+			status: 206,
+			statusText: 'Partial Content',
+			headers: {
+				'Content-Range': `bytes ${start}-${end}/${data.byteLength}`,
+				'Accept-Ranges': 'bytes',
+				'Content-Length': chunk.byteLength.toString(),
+				'Content-Type': contentType,
+			},
+		});
+	} catch (error) {
+		console.error('Error creating range response:', error);
+		return cachedResponse;
+	}
+}
+
+// Helper function to handle audio requests
+async function handleAudioRequest(request) {
+	const cache = await caches.open(AUDIO_CACHE);
+
+	// Try to match the request URL (ignore range headers for cache lookup)
+	const cachedResponse = await cache.match(request.url);
+
+	if (cachedResponse) {
+		console.log('Serving audio from cache:', request.url);
+		// Handle range requests from cache
+		if (request.headers.get('range')) {
+			return createRangeResponse(cachedResponse, request);
+		}
+		return cachedResponse;
+	}
+
+	// Not in cache, fetch from network
+	console.log('Fetching audio from network:', request.url);
+	try {
+		const response = await fetch(request);
+
+		// Cache successful responses (but only if it's a full response, not a range)
+		if (response.ok && response.status === 200) {
+			cache.put(request.url, response.clone());
+		}
+
+		return response;
+	} catch (error) {
+		console.error('Audio fetch failed:', error);
+		throw error;
+	}
+}
+
 // Fetch event - serve from cache, cache images on access
 self.addEventListener('fetch', (event) => {
 	const { request } = event;
 	const url = new URL(request.url);
 
 	// Handle static files (HTML, CSS, JS)
-
 	if (
 		STATIC_FILES.includes(url.pathname) ||
 		request.destination === 'style' ||
@@ -168,26 +232,9 @@ self.addEventListener('fetch', (event) => {
 		return;
 	}
 
-	// Handle audio - cache only when explicitly requested
+	// Handle audio with range request support
 	if (request.destination === 'audio') {
-		event.respondWith(
-			caches.open(AUDIO_CACHE).then((cache) => {
-				return cache.match(request).then((response) => {
-					return (
-						response ||
-						fetch(request).then((fetchResponse) => {
-							// Optionally cache audio on first play
-							/*
-                    if (fetchResponse.ok) {
-                        cache.put(request, fetchResponse.clone());
-                    }
-												*/
-							return fetchResponse;
-						})
-					);
-				});
-			})
-		);
+		event.respondWith(handleAudioRequest(request));
 		return;
 	}
 
@@ -204,10 +251,11 @@ self.addEventListener('message', (event) => {
 			caches
 				.open(AUDIO_CACHE)
 				.then((cache) => {
+					// Fetch the full audio file (no range header)
 					return fetch(audioUrl).then((response) => {
 						const messagePort = event.ports[0];
 
-						if (response.ok) {
+						if (response.ok && response.status === 200) {
 							cache.put(audioUrl, response.clone());
 							messagePort?.postMessage({
 								success: true,
@@ -217,12 +265,13 @@ self.addEventListener('message', (event) => {
 							messagePort?.postMessage({
 								success: false,
 								url: audioUrl,
-								error: 'Fetch failed',
+								error: `Fetch failed with status ${response.status}`,
 							});
 						}
 					});
 				})
 				.catch((error) => {
+					console.error('Cache audio error:', error);
 					event.ports[0]?.postMessage({
 						success: false,
 						url: audioUrl,
@@ -237,6 +286,20 @@ self.addEventListener('message', (event) => {
 		event.waitUntil(
 			caches.delete(cacheName).then(() => {
 				event.ports[0].postMessage({ success: true });
+			})
+		);
+	}
+
+	if (event.data.type === 'CHECK_CACHED') {
+		const audioUrl = event.data.url;
+		event.waitUntil(
+			caches.open(AUDIO_CACHE).then((cache) => {
+				return cache.match(audioUrl).then((response) => {
+					event.ports[0]?.postMessage({
+						url: audioUrl,
+						cached: !!response,
+					});
+				});
 			})
 		);
 	}
@@ -277,6 +340,26 @@ async function cacheAudio(audioUrl) {
   }
 }
 
+// Function to check if audio is cached
+async function isAudioCached(audioUrl) {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    const messageChannel = new MessageChannel();
+    
+    return new Promise((resolve) => {
+      messageChannel.port1.onmessage = (event) => {
+        resolve(event.data.cached);
+      };
+      
+      navigator.serviceWorker.controller.postMessage(
+        { type: 'CHECK_CACHED', url: audioUrl },
+        [messageChannel.port2]
+      );
+    });
+  }
+  return false;
+}
+
 // Usage example:
-// cacheAudio('/audio/song.mp3');
+// await cacheAudio('https://example.com/podcast/episode.mp3');
+// const isCached = await isAudioCached('https://example.com/podcast/episode.mp3');
 */
