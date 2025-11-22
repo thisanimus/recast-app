@@ -162,7 +162,6 @@ export const cacheAudio = async (audioUrl) => {
 		});
 	}
 };
-
 export const setLockscreenMedia = ({ title, artist, podcast, image, w, h, mime }) => {
 	if ('mediaSession' in navigator) {
 		navigator.mediaSession.metadata = new MediaMetadata({
