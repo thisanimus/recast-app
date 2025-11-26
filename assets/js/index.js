@@ -3,12 +3,14 @@ import '../components/router-view.js';
 import '../components/router-nav.js';
 import '../components/episode-player.js';
 import '../components/podcast-episode.js';
+import '../components/download-button.js';
 import '../components/play-pause.js';
 import '../views/podcast-index.js';
 import '../views/podcast-single.js';
 import '../views/podcast-search.js';
 
 import { Settings } from './settings.js';
+import { refreshAll } from './podcast.js';
 
 (function () {
 	const originalPushState = history.pushState;
@@ -31,7 +33,7 @@ document.querySelectorAll('img').forEach((img) => {
 	});
 });
 
-//refreshAll();
+//await refreshAll();
 
 const persistButton = document.getElementById('persist');
 if (persistButton) {
@@ -52,8 +54,8 @@ if (podcast && episodes) {
 	Db.podcasts.upsert(podcast);
 	Db.episodes.upsert(episodes);
 }
-	*/
 
+	*/
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
 		.register('/service-worker.js')

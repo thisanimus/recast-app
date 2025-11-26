@@ -1,12 +1,18 @@
 import { Db } from '../js/db.js';
+/**
+ * @typedef {import('../js/db.js').Podcast} Podcast
+ */
 
 export class PodcastIndex extends HTMLElement {
 	constructor() {
 		super();
 		this.refs = {
+			view: this.closest('router-view'),
 			grid: this.querySelector('.grid'),
 		};
+		/** @type {Podcast[]} */
 		this.podcasts = [];
+		this.refs.view.removeAttribute('ready');
 		this.getPodcasts();
 	}
 	connectedCallback() {
@@ -34,6 +40,7 @@ export class PodcastIndex extends HTMLElement {
 			<a class="router-link add-link" href="?view=add" title="Add New Podcast">
 				<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M256 112v288M400 256H112"/></svg>
 			</a>`;
+		this.refs.view.setAttribute('ready', true);
 	}
 }
 customElements.define('podcast-index', PodcastIndex);

@@ -14,6 +14,10 @@ h6 {
 h6 {
 	font-size: 0.9rem;
 }
+a {
+	text-decoration: none;
+	color: var(--color-text);
+}
 
 p {
 	overflow-wrap: break-word;
@@ -25,20 +29,8 @@ em {
 	font-style: italic;
 }
 
-a {
-	text-decoration: none;
-	font-weight: 600;
-	color: var(--color-link-default);
-}
-a:where(:hover, :focus) {
-	color: var(--color-link-hover);
-}
-
 :where(p, ul:not([class]), ol:not([class]), pre, code, blockquote, img, video, iframe) + :is(h1, h2, h3, h4, h5, h6) {
 	margin-top: var(--space-md);
-}
-mark {
-	background: #fff176;
 }
 
 address {
@@ -92,29 +84,4 @@ ol:not([class]) ul {
 ul:not([class]) ol,
 ol:not([class]) ol {
 	margin: 1rem 0 1rem 2rem;
-}
-
-hr {
-	border: none;
-	height: var(--border-width);
-	background: var(--color-ui-muted);
-	width: 100%;
-	margin: var(--space-md) 0;
-}
-blockquote {
-	background: var(--color-background-intense);
-	border-left: var(--border-width) solid var(--color-ui);
-	padding: var(--space-sm);
-	margin: 0 0 var(--space-md) 0;
-}
-blockquote:not(:first-child) {
-	margin: var(--space-md) 0;
-}
-blockquote > :first-child {
-	padding-top: 0;
-	margin-top: 0;
-}
-blockquote > :last-child {
-	padding-bottom: 0;
-	margin-bottom: 0;
 }

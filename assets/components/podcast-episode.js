@@ -1,7 +1,12 @@
 import { formatRFCDate, secondsToTextTime } from '../js/utilities.js';
+/**
+ * @typedef {import('../js/db.js').Podcast} Podcast
+ * @typedef {import('../js/db.js').Episode} Episode
+ */
 
 class PodcastEpisode extends HTMLElement {
-	_episode = null;
+	/** @type {Episode} */
+	_episode;
 
 	constructor() {
 		super();
@@ -19,11 +24,19 @@ class PodcastEpisode extends HTMLElement {
 
 	makePrepend() {
 		let prependArray = [];
+		const season = this._episode.season ? 'S' + this._episode.season + ' ' : '';
+		if (this._episode.type.toLowerCase() == 'trailer') {
+			prependArray.push(`${season}Trailer`);
+		}
+		if (this._episode.type.toLowerCase() == 'bonus') {
+			prependArray.push(`${season}Bonus`);
+		}
+		// eg S1/E1
 		if (this._episode.season && this._episode.episode) {
 			prependArray.push(`S${this._episode.season}/E${this._episode.episode}`);
 		}
 		prependArray.push(formatRFCDate(this._episode.pubDate));
-		return prependArray;
+		return prependArray.join(' • ');
 	}
 
 	makeAppend() {
@@ -32,14 +45,6 @@ class PodcastEpisode extends HTMLElement {
 			appendArray.push(`${secondsToTextTime(this._episode.duration - this._episode.progress)} left`);
 		}
 		return appendArray.join(' • ');
-	}
-
-	downloadIcon() {
-		if (this._episode.downloaded) {
-			return /*html*/ `<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M416 128L192 384l-96-96"/></svg>`;
-		} else {
-			return /*html*/ `<svg xmlns="http://www.w3.org/2000/svg" class="ionicon" viewBox="0 0 512 512"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 268l144 144 144-144M256 392V100"/></svg>`;
-		}
 	}
 
 	render() {
@@ -54,11 +59,12 @@ class PodcastEpisode extends HTMLElement {
 					<div class="title">${this._episode.title}</div>
 					<div class="append">${append}</div>
 				</div>
-				<button class="download" data-audio="${this._episode.audio}"  data-guid="${this._episode.guid}" title="${
-			this._episode.downloaded ? 'Delete' : 'Download'
-		}">
-					${this.downloadIcon()}
-				</button>
+				<download-button 
+					guid="${this._episode.guid}"
+					url="${this._episode.audio}"
+					downloaded="${this._episode.downloaded.toString()}" >
+						<button></button>
+					</download-button>
 				<play-pause state="pause" guid="${this._episode.guid}" progress="${this._episode.progress / this._episode.duration}">
 					<button title="Play">
 						<div class="icon-wrapper">

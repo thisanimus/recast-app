@@ -1,6 +1,11 @@
 import { Db } from '../js/db.js';
 import { fetchPodcast, cacheAudio } from '../js/podcast.js';
 
+/**
+ * @typedef {import('../js/db.js').Podcast} Podcast
+ * @typedef {import('../js/db.js').Episode} Episode
+ */
+
 class PodcastSingle extends HTMLElement {
 	constructor() {
 		super();
@@ -16,96 +21,79 @@ class PodcastSingle extends HTMLElement {
 			subscriptionButton: this.querySelector('#subscription'),
 		};
 		this.isSubscribed = false;
-		this.podcast = {
-			title: null,
-			link: null,
-			feedUrl: null,
-			description: null,
-			summary: null,
-			pubDate: null,
-			image: null,
-			author: null,
-			category: null,
-			explicit: null,
-			subtitle: null,
-		};
+		/** @type {Podcast} */
+		this.podcast;
+		/** @type {Episode[]} */
 		this.episodes = [];
+		this.loadPodcast();
 	}
 	connectedCallback() {
 		this.attachEventListeners();
 	}
 	async loadPodcast() {
-		const feedUrl = this.q.get('feedUrl');
-		if (feedUrl) {
-			this.podcast = await Db.podcasts.read(feedUrl);
-			if (this.podcast) {
-				this.isSubscribed = true;
-				this.episodes = await Db.episodes.readByPodcast(feedUrl);
-			}
+		this.refs.view.removeAttribute('ready');
 
-			if (this.episodes && this.podcast) {
-				console.log('foobar');
-				this.render();
-			} else {
-				const { podcast, episodes } = await fetchPodcast(feedUrl);
-				this.podcast = podcast;
-				this.episodes = episodes;
-				if (this.episodes && this.podcast) {
-					this.render();
-				}
-			}
+		// Quick exit if conditions aren't met
+		if (this.q.get('view') !== 'podcast') return;
+		const feedUrl = this.q.get('feedUrl');
+		if (!feedUrl) return;
+
+		// Try DB first
+		const podcast = await Db.podcasts.read(feedUrl);
+		if (podcast) {
+			this.podcast = podcast;
+			this.isSubscribed = true;
+			this.episodes = await Db.episodes.readByPodcast(feedUrl);
+		}
+
+		// If DB failed, fetch from network
+		if (!this.podcast || !this.episodes) {
+			const result = await fetchPodcast(feedUrl);
+			this.podcast = result.podcast;
+			this.episodes = result.episodes;
+		}
+
+		// Only render if both values exist
+		if (this.podcast && this.episodes) {
+			this.render();
 		}
 	}
 	attachEventListeners() {
 		window.addEventListener('urlchange', () => {
 			this.q = new URLSearchParams(window.location.search);
 			if (this.q.get('view') !== 'podcast') {
-				this.refs.view.setAttribute('loading', true);
+				this.refs.view.removeAttribute('ready');
 				this.isSubscribed = false;
-			}
-
-			if (this.q.get('view') == 'podcast' && this.q.get('feedUrl') !== this.podcast?.feedUrl) {
-				this.refs.view.setAttribute('loading', true);
+				this.podcast = null;
+				this.episodes = null;
+			} else {
 				this.loadPodcast();
 			}
 		});
 
-		this.addEventListener('click', this.handleClick.bind(this));
-	}
-	async handleClick(e) {
-		const downloadAudio = e.target.classList.contains('download');
-		if (downloadAudio) {
-			const guid = e.target.dataset.guid;
-			const audio = e.target.dataset.audio;
-			const episode = this.episodes.find((e) => e.guid == guid);
-			if (!episode.downloaded) {
-				cacheAudio(audio).then(() => {
-					Db.episodes.updateProp(guid, 'downloaded', true).then(() => {
-						this.loadPodcast();
-					});
-				});
-			} else {
-				Db.episodes.updateProp(guid, 'downloaded', false).then(() => {
-					this.loadPodcast();
-				});
-			}
-		}
-
-		const subscription = e.target.id === 'subscription';
-		if (subscription) {
-			if (!this.isSubscribed) {
-				await Promise.all([Db.podcasts.upsert(this.podcast), Db.episodes.upsert(this.episodes)]);
+		this.refs.subscriptionButton.addEventListener('click', async () => {
+			const { podcast, episodes, isSubscribed } = this;
+			if (!isSubscribed) {
+				await Promise.all([Db.podcasts.upsert(podcast), Db.episodes.upsert(episodes)]);
 				this.isSubscribed = true;
-				this.updateSubscribeButton();
 			} else {
-				await Db.podcasts.delete(this.podcast.feedUrl);
+				await Db.podcasts.delete(podcast.feedUrl);
 				this.isSubscribed = false;
-				this.updateSubscribeButton();
 			}
-		}
+			this.updateSubscribeButton();
+		});
 	}
 	updateSubscribeButton() {
 		this.refs.subscriptionButton.textContent = this.isSubscribed ? 'Unsubscribe' : '+ Subscribe';
+	}
+	createEpisodeList() {
+		const episodeList = document.createDocumentFragment();
+		this.episodes.reverse().forEach((ep) => {
+			const el = document.createElement('podcast-episode');
+			el.episode = ep;
+			episodeList.appendChild(el);
+		});
+		this.refs.episodes.replaceChildren(episodeList);
 	}
 
 	render() {
@@ -115,21 +103,9 @@ class PodcastSingle extends HTMLElement {
 		this.refs.author.textContent = this.podcast.author;
 		this.refs.category.textContent = this.podcast.category;
 		this.refs.description.textContent = this.podcast.summary;
-
-		const episodeList = document.createDocumentFragment();
-
-		this.episodes.forEach((ep) => {
-			if (ep.downloaded) {
-				console.log(ep);
-			}
-			const el = document.createElement('podcast-episode');
-			el.episode = ep;
-			episodeList.appendChild(el);
-		});
-		this.refs.episodes.replaceChildren(episodeList);
-
-		this.refs.view.removeAttribute('loading');
+		this.createEpisodeList();
 		this.updateSubscribeButton();
+		this.refs.view.setAttribute('ready', true);
 	}
 }
 customElements.define('podcast-single', PodcastSingle);

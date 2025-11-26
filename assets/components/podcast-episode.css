@@ -27,14 +27,6 @@
 		font-size: 0.8rem;
 		color: var(--color-text-muted);
 	}
-	.download {
-		width: 2.5rem;
-		height: 2.5rem;
-		padding: 0.65rem;
-		> * {
-			pointer-events: none;
-		}
-	}
 
 	.icon-wrapper {
 		--size: 2.5rem;

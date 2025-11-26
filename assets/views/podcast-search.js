@@ -4,6 +4,7 @@ class PodcastSearch extends HTMLElement {
 	constructor() {
 		super();
 		this.refs = {
+			view: this.closest('router-view'),
 			form: this.querySelector('form'),
 			search: this.querySelector('#search'),
 			results: this.querySelector('.results'),
@@ -11,6 +12,7 @@ class PodcastSearch extends HTMLElement {
 	}
 	connectedCallback() {
 		this.addEventListeners();
+		this.refs.view.setAttribute('ready', true);
 	}
 
 	async search(searchString) {}
@@ -19,7 +21,7 @@ class PodcastSearch extends HTMLElement {
 			e.preventDefault();
 			const searchValue = this.refs.search.value;
 			let feedUrl = null;
-			if (searchValue.includes('podcasts.apple.com')) {
+			if (searchValue.includes('podcasts.apple.com') || searchValue.includes('itunes.com')) {
 				feedUrl = await getFeedUrlFromItunes(searchValue);
 			} else {
 				feedUrl = searchValue;

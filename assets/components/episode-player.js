@@ -4,6 +4,11 @@ import { setLockscreenMedia } from '../js/podcast.js';
 import { Settings } from '../js/settings.js';
 import { secToTime } from '../js/utilities.js';
 
+/**
+ * @typedef {import('../js/db.js').Podcast} Podcast
+ * @typedef {import('../js/db.js').Episode} Episode
+ */
+
 export class EpisodePlayer extends HTMLElement {
 	static get observedAttributes() {
 		return ['guid', 'minimized'];
@@ -28,36 +33,10 @@ export class EpisodePlayer extends HTMLElement {
 			playbackRate: this.querySelector('#playback-rate'),
 			toggle: this.querySelector('#toggle'),
 		};
-		this.podcast = {
-			title: null,
-			link: null,
-			feedUrl: null,
-			description: null,
-			pubDate: null,
-			image: null,
-			author: null,
-			category: null,
-			explicit: null,
-			subtitle: null,
-		};
-		this.episode = {
-			podcast: null,
-			title: null,
-			link: null,
-			description: null,
-			subtitle: null,
-			pubDate: null,
-			guid: null,
-			author: null,
-			image: null,
-			audio: null,
-			filesize: null,
-			duration: null,
-			progress: null,
-			downloaded: null,
-			archived: null,
-		};
-
+		/** @type {Podcast} */
+		this.podcast;
+		/** @type {Episode} */
+		this.episode;
 		this.rates = [0.75, 1, 1.25, 1.5, 2];
 	}
 

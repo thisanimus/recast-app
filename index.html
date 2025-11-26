@@ -1,39 +1,38 @@
 <!DOCTYPE html>
 <html lang="en" class="view-index">
 	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
 		<title>Recast</title>
-		<link rel="stylesheet" href="assets/css/style.css" />
-
-		<link rel="icon" href="assets/appicon/favicon.ico" sizes="32x32" />
-		<link rel="icon" href="assets/appicon/icon.svg" type="image/svg+xml" />
-		<link rel="apple-touch-icon" href="assets/appicon/apple-touch-icon.png" />
-		<link rel="manifest" href="manifest.json" />
+		<link rel="stylesheet" href="assets/css/style.css"/>
+		<link rel="icon" href="assets/appicon/favicon.ico" sizes="32x32"/>
+		<link rel="icon" href="assets/appicon/icon.svg" type="image/svg+xml"/>
+		<link rel="apple-touch-icon" href="assets/appicon/apple-touch-icon.png"/>
+		<link rel="manifest" href="manifest.json"/>
 	</head>
 	<body>
 		<router-layout>
-			<router-view id="index" class="active">
+			<router-view id="index" state="active">
 				<h1>Podcasts</h1>
 				<podcast-index>
 					<div class="grid"></div>
 				</podcast-index>
 			</router-view>
-			<router-view id="add">
+			<router-view id="add" state="inactive">
 				<podcast-search>
 					<form name="search-form">
 						<label for="search" class="hidden">Search</label>
-						<input id="search" type="search" placeholder="Enter an RSS feed url, or an Apple Podcasts url" />
+						<input id="search" type="search" placeholder="Enter an RSS feed url, or an Apple Podcasts url"/>
 						<button>Search</button>
 					</form>
-					<div class="results"></div>
+					<a href="https://castos.com/tools/find-podcast-rss-feed/" target="_blank">Find Podcast URLs</a>
 				</podcast-search>
 			</router-view>
-			<router-view id="podcast">
+			<router-view id="podcast" state="inactive">
 				<podcast-single>
 					<header>
-						<img class="image" />
+						<img class="image"/>
 						<div>
 							<div class="subtitle">
 								<span class="category"></span>
@@ -48,44 +47,29 @@
 
 					<ol class="episodes"></ol>
 				</podcast-single>
-				<a class="router-link" href="?view=index">Index</a>
-				<a class="router-link" href="?view=episode">Episode</a>
 			</router-view>
-			<router-view id="episode">
+			<router-view id="episode" state="inactive">
 				<h1>Episode</h1>
-				<a class="router-link" href="?view=podcast">Podcast</a>
-				<a class="router-link" href="?view=index">Index</a>
 			</router-view>
 			<episode-player minimized="true">
 				<div class="collapse">
 					<audio></audio>
-					<img class="image" src="/assets/img/default-episode-image.webp" />
+					<img class="image" src="/assets/img/default-episode-image.webp"/>
 					<div class="title-wrapper">
 						<div class="title"></div>
 						<div class="podcast-title"></div>
 					</div>
 					<div class="time">
-						<input id="time-input" type="range" step="1" min="0" max="0" />
+						<input id="time-input" type="range" step="1" min="0" max="0"/>
 						<time class="time-total"></time>
 						<label class="hidden" for="time-input">Current time</label>
 						<time class="time-remaining"></time>
 					</div>
 				</div>
 				<div class="player-buttons">
-					<img class="image-mini" />
+					<img class="image-mini"/>
 					<button id="skip-back" title="Skip Back">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewbox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="feather feather-rotate-ccw"
-						>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-ccw">
 							<polyline points="1 4 1 10 7 10"></polyline>
 							<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
 						</svg>
@@ -93,18 +77,7 @@
 					<play-pause state="pause" progress="0">
 						<button title="Play">
 							<div class="icon">
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="24"
-									height="24"
-									viewbox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									class="feather feather-play-circle"
-								>
+								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle">
 									<circle cx="12" cy="12" r="10"></circle>
 									<polygon points="10 8 16 12 10 16 10 8"></polygon>
 								</svg>
@@ -112,59 +85,35 @@
 						</button>
 					</play-pause>
 					<button id="skip-forward" title="Skip Forward">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewbox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="feather feather-rotate-cw"
-						>
+						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rotate-cw">
 							<polyline points="23 4 23 10 17 10"></polyline>
 							<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
 						</svg>
 					</button>
 					<button id="playback-rate" title="Playback Rate">1x</button>
 					<button id="toggle" title="Open Player">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-							<path
-								fill="none"
-								stroke="currentColor"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="48"
-								d="M112 328l144-144 144 144"
-							/>
+						<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
+							<path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="48" d="M112 328l144-144 144 144"/>
 						</svg>
 					</button>
 				</div>
 			</episode-player>
 			<router-nav>
 				<a class="router-link" href="?view=add">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-						<path
-							d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm80 224h-64v64a16 16 0 01-32 0v-64h-64a16 16 0 010-32h64v-64a16 16 0 0132 0v64h64a16 16 0 010 32z"
-						/>
+					<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
+						<path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm80 224h-64v64a16 16 0 01-32 0v-64h-64a16 16 0 010-32h64v-64a16 16 0 0132 0v64h64a16 16 0 010 32z"/>
 					</svg>
 					<div class="title">Add New</div>
 				</a>
 				<a class="router-link" href="?view=index">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-						<path
-							d="M204 240H68a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 240H308a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM204 480H68a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 480H308a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36z"
-						/>
+					<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
+						<path d="M204 240H68a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 240H308a36 36 0 01-36-36V68a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM204 480H68a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36zM444 480H308a36 36 0 01-36-36V308a36 36 0 0136-36h136a36 36 0 0136 36v136a36 36 0 01-36 36z"/>
 					</svg>
 					<div class="title">Podcasts</div>
 				</a>
 				<a class="router-link" href="?view=settings">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-						<path
-							d="M64 144h226.75a48 48 0 0090.5 0H448a16 16 0 000-32h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32zM448 368h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32h226.75a48 48 0 0090.5 0H448a16 16 0 000-32zM448 240H221.25a48 48 0 00-90.5 0H64a16 16 0 000 32h66.75a48 48 0 0090.5 0H448a16 16 0 000-32z"
-						/>
+					<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
+						<path d="M64 144h226.75a48 48 0 0090.5 0H448a16 16 0 000-32h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32zM448 368h-66.75a48 48 0 00-90.5 0H64a16 16 0 000 32h226.75a48 48 0 0090.5 0H448a16 16 0 000-32zM448 240H221.25a48 48 0 00-90.5 0H64a16 16 0 000 32h66.75a48 48 0 0090.5 0H448a16 16 0 000-32z"/>
 					</svg>
 					<div class="title">Settings</div>
 				</a>

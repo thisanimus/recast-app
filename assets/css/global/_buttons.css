@@ -9,6 +9,5 @@ button,
 	-webkit-tap-highlight-color: transparent;
 	&:hover,
 	&:focus {
-		color: var(--color-link-hover);
 	}
 }

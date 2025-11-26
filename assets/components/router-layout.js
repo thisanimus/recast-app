@@ -37,12 +37,14 @@ export class RouterLayout extends HTMLElement {
 		this.q = new URLSearchParams(window.location.search);
 		this.refs = {
 			views: this.querySelectorAll('router-view'),
-			currentView: this.querySelector('router-view.active'),
+			currentView: this.querySelector('router-view[state="active"]'),
 		};
 	}
 
 	connectedCallback() {
-		this.navigate();
+		if (this.q.get('view') !== this.refs.currentView.id) {
+			this.navigate();
+		}
 
 		this.addEventListener('click', this.handleClick.bind(this));
 
@@ -75,6 +77,7 @@ export class RouterLayout extends HTMLElement {
 		const nav = `${fromId}->${nextId}`;
 
 		const enteringView = [...this.refs.views].find((v) => v.id === nextId);
+
 		if (!enteringView) return;
 
 		const t = transitions.find((t) => t.nav.includes(nav));
@@ -86,10 +89,10 @@ export class RouterLayout extends HTMLElement {
 		const currentView = this.refs.currentView;
 
 		// Wait for the entering view to be loaded before starting transition
-		if (enteringView.hasAttribute('loading')) {
+		if (!enteringView.hasAttribute('ready')) {
 			await new Promise((resolve) => {
 				const observer = new MutationObserver((mutations) => {
-					if (!enteringView.hasAttribute('loading')) {
+					if (enteringView.hasAttribute('ready')) {
 						observer.disconnect();
 						resolve();
 					}
@@ -97,11 +100,11 @@ export class RouterLayout extends HTMLElement {
 
 				observer.observe(enteringView, {
 					attributes: true,
-					attributeFilter: ['loading'],
+					attributeFilter: ['ready'],
 				});
 
 				// If it's already loaded by the time we check, resolve immediately
-				if (!enteringView.hasAttribute('loading')) {
+				if (enteringView.hasAttribute('ready')) {
 					observer.disconnect();
 					resolve();
 				}
@@ -114,8 +117,8 @@ export class RouterLayout extends HTMLElement {
 
 		document
 			.startViewTransition(() => {
-				currentView.classList.remove('active');
-				enteringView.classList.add('active');
+				currentView.setAttribute('state', 'inactive');
+				enteringView.setAttribute('state', 'active');
 				this.refs.currentView = enteringView;
 			})
 			.finished.then(() => {

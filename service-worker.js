@@ -1,8 +1,9 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.009';
+const CACHE_VERSION = 'v0.016';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
-const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
+const AUDIO_CACHE = `audio`;
+const PROXY_PREFIX = 'https://proxy.thisanimus.com/?url=';
 
 // Add your local files here
 const STATIC_FILES = [
@@ -32,19 +33,21 @@ const STATIC_FILES = [
 	'/assets/img/screenshot-2.png',
 	'/assets/img/screenshot-3.png',
 	'/assets/img/screenshot-1.png',
-	'/assets/components/play-pause.css',
-	'/assets/components/router-nav.css',
-	'/assets/components/network-status.js',
+	'/assets/components/download-button.css',
+	'/assets/components/download-button.js',
 	'/assets/components/episode-player.css',
+	'/assets/components/episode-player.js',
+	'/assets/components/network-status.js',
+	'/assets/components/play-pause.css',
+	'/assets/components/play-pause.js',
+	'/assets/components/podcast-episode.css',
+	'/assets/components/podcast-episode.js',
+	'/assets/components/router-layout.css',
+	'/assets/components/router-layout.js',
+	'/assets/components/router-nav.css',
 	'/assets/components/router-nav.js',
 	'/assets/components/router-view.css',
-	'/assets/components/router-layout.css',
-	'/assets/components/episode-player.js',
-	'/assets/components/podcast-episode.css',
 	'/assets/components/router-view.js',
-	'/assets/components/router-layout.js',
-	'/assets/components/podcast-episode.js',
-	'/assets/components/play-pause.js',
 	'/assets/appicon/icon-192x192.png',
 	'/assets/appicon/icon.png',
 	'/assets/appicon/apple-touch-icon.png',
@@ -59,8 +62,6 @@ const STATIC_FILES = [
 	'/assets/views/podcast-index.js',
 	'/assets/views/podcast-single.js',
 ];
-
-// Install event - cache static files
 
 self.addEventListener('install', (event) => {
 	console.log('Service Worker installing...');
@@ -91,7 +92,7 @@ self.addEventListener('activate', (event) => {
 							return (
 								(name.startsWith('static-') && name !== STATIC_CACHE) ||
 								(name.startsWith('images-') && name !== IMAGE_CACHE) ||
-								(name.startsWith('audio-') && name !== AUDIO_CACHE)
+								(name.startsWith('audio') && name !== AUDIO_CACHE)
 							);
 						})
 						.map((name) => caches.delete(name))
@@ -101,182 +102,212 @@ self.addEventListener('activate', (event) => {
 	);
 });
 
-// Fetch event - serve from cache, cache images on access
+// ------------------------------------------------------------
+// FETCH EVENT: Cache all remote images
+// ------------------------------------------------------------
+
+/**
+ * Intercepts all fetch requests.
+ * If the request is an image request to an http/https URL:
+ *   → Try returning from cache
+ *   → If not in cache, fetch from network and store it
+ *
+ * All other requests pass through untouched.
+ */
 self.addEventListener('fetch', (event) => {
-	const { request } = event;
-	const url = new URL(request.url);
+	const request = event.request;
 
-	// Handle static files (HTML, CSS, JS)
+	// Only intercept http(s) requests
+	if (!request.url.startsWith('http')) return;
 
-	if (
-		STATIC_FILES.includes(url.pathname) ||
-		request.destination === 'style' ||
-		request.destination === 'script' ||
-		request.destination === 'document'
-	) {
-		event.respondWith(
-			caches
-				.match(request)
-				.then((response) => {
-					return (
-						response ||
-						fetch(request).then((fetchResponse) => {
-							// Cache new static files
-							return caches.open(STATIC_CACHE).then((cache) => {
-								cache.put(request, fetchResponse.clone());
-								return fetchResponse;
-							});
-						})
-					);
-				})
-				.catch(() => {
-					// Offline fallback for HTML pages
-					if (request.destination === 'document') {
-						return caches.match('/index.html');
-					}
-				})
-		);
-		return;
+	// Heuristics to check if it's an image request
+	if (isImageRequest(request)) {
+		event.respondWith(cacheImage(request));
 	}
-
-	// Handle images - cache on first access
-	if (request.destination === 'image') {
-		event.respondWith(
-			caches
-				.open(IMAGE_CACHE)
-				.then((cache) => {
-					return cache.match(request).then((response) => {
-						if (response) {
-							return response;
-						}
-
-						// Fetch and cache image
-						return fetch(request).then((fetchResponse) => {
-							// Only cache successful responses
-							if (fetchResponse.ok) {
-								cache.put(request, fetchResponse.clone());
-							}
-							return fetchResponse;
-						});
-					});
-				})
-				.catch(() => {
-					// Could return a placeholder image here
-					console.log('Image fetch failed:', request.url);
-				})
-		);
-		return;
-	}
-
-	// Handle audio - cache only when explicitly requested
-	if (request.destination === 'audio') {
-		event.respondWith(
-			caches.open(AUDIO_CACHE).then((cache) => {
-				return cache.match(request).then((response) => {
-					return (
-						response ||
-						fetch(`https://api.allorigins.win/get?url=` + request, {}).then((fetchResponse) => {
-							// Optionally cache audio on first play
-							/*
-                    if (fetchResponse.ok) {
-                        cache.put(request, fetchResponse.clone());
-                    }
-												*/
-							return fetchResponse;
-						})
-					);
-				});
-			})
-		);
-		return;
-	}
-
-	// Default: fetch without caching
-	event.respondWith(fetch(request));
 });
 
-// Message handler for on-demand audio caching
+// ------------------------------------------------------------
+// IMAGE HANDLING HELPERS
+// ------------------------------------------------------------
+
+/**
+ * Cache-first strategy for images.
+ *
+ * @param {Request} request
+ * @returns {Promise<Response>}
+ */
+async function cacheImage(request) {
+	const cache = await caches.open(IMAGE_CACHE);
+
+	// Try to serve from cache
+	const cached = await cache.match(request);
+	if (cached) return cached;
+
+	// Fetch from network
+	try {
+		const response = await fetch(request);
+
+		// Only cache valid, opaque-safe responses
+		if (response && response.ok) {
+			cache.put(request, response.clone());
+		}
+
+		return response;
+	} catch (err) {
+		// Network failed – return placeholder or fallback?
+		// For now, just fail through:
+		return new Response('Network error', { status: 408 });
+	}
+}
+
+/**
+ * Determines if a fetch request is for an image.
+ *
+ * Checks:
+ *   • request.destination === 'image'
+ *   • OR URL ends with common image extensions
+ *   • OR Accept header contains image/*
+ *
+ * @param {Request} request
+ * @returns {boolean}
+ */
+function isImageRequest(request) {
+	// Best indicator — browsers mark fetch destination
+	if (request.destination === 'image') return true;
+
+	const url = request.url.toLowerCase();
+
+	// Common extensions
+	const imgExt = /\.(png|jpg|jpeg|gif|webp|avif|svg|bmp|ico)$/;
+	if (imgExt.test(url)) return true;
+
+	// Check Accept header
+	const accept = request.headers.get('Accept');
+	if (accept && accept.includes('image/')) return true;
+
+	return false;
+}
+
+// ------------------------------------------------------------
+// MESSAGE HANDLER
+// ------------------------------------------------------------
 self.addEventListener('message', (event) => {
-	if (event.data.type === 'CACHE_AUDIO') {
-		const audioUrl = event.data.url;
+	const { type, url } = event.data || {};
+	const port = event.ports[0];
 
-		event.waitUntil(
-			caches
-				.open(AUDIO_CACHE)
-				.then((cache) => {
-					return fetch(audioUrl).then((response) => {
-						const messagePort = event.ports[0];
+	if (!type || !port) return;
 
-						if (response.ok) {
-							cache.put(audioUrl, response.clone());
-							messagePort?.postMessage({
-								success: true,
-								url: audioUrl,
-							});
-						} else {
-							messagePort?.postMessage({
-								success: false,
-								url: audioUrl,
-								error: 'Fetch failed',
-							});
-						}
-					});
-				})
-				.catch((error) => {
-					event.ports[0]?.postMessage({
-						success: false,
-						url: audioUrl,
-						error: error.message,
-					});
-				})
-		);
-	}
+	switch (type) {
+		case 'CACHE_AUDIO':
+			cacheAudioFile(url, port);
+			break;
 
-	if (event.data.type === 'CLEAR_CACHE') {
-		const cacheName = event.data.cacheName;
-		event.waitUntil(
-			caches.delete(cacheName).then(() => {
-				event.ports[0].postMessage({ success: true });
-			})
-		);
+		case 'DELETE_AUDIO':
+			deleteAudioFile(url, port);
+			break;
+
+		case 'CHECK_AUDIO':
+			checkAudioFile(url, port);
+			break;
 	}
 });
 
-// Helper function to cache audio from your main script:
-/*
-// In your main JavaScript file:
+// ------------------------------------------------------------
+// CACHE AUDIO (with fallback proxy)
+// ------------------------------------------------------------
+/**
+ * @param {string} url
+ * @param {MessagePort} port
+ */
+async function cacheAudioFile(url, port) {
+	try {
+		const cache = await caches.open(AUDIO_CACHE);
+		let response;
 
-// Register the service worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js')
-    .then(reg => console.log('Service Worker registered', reg))
-    .catch(err => console.log('Service Worker registration failed', err));
+		try {
+			// Try direct fetch first
+			response = await fetch(url);
+
+			// If fetch succeeds but returns HTTP error, try proxy
+			if (!response.ok) {
+				console.log(`Direct fetch returned ${response.status}, trying proxy...`);
+				const proxyUrl = PROXY_PREFIX + encodeURIComponent(url);
+				response = await fetch(proxyUrl);
+			}
+		} catch (fetchError) {
+			// CORS errors or network failures end up here
+			console.log('Direct fetch failed (likely CORS), trying proxy...', fetchError.message);
+			const proxyUrl = PROXY_PREFIX + url;
+			response = await fetch(proxyUrl);
+		}
+
+		if (response && response.ok) {
+			await cache.put(url, response.clone());
+			port.postMessage({ type: 'CACHE_AUDIO_RESULT', ok: true, url });
+		} else {
+			port.postMessage({
+				type: 'CACHE_AUDIO_RESULT',
+				ok: false,
+				url,
+				error: `Fetch failed with status ${response?.status || 'unknown'}`,
+			});
+		}
+	} catch (err) {
+		// This catches errors from the proxy fetch or cache operations
+		port.postMessage({ type: 'CACHE_AUDIO_RESULT', ok: false, url, error: err.message });
+	}
 }
 
-// Function to cache audio on demand
-async function cacheAudio(audioUrl) {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    const messageChannel = new MessageChannel();
-    
-    return new Promise((resolve, reject) => {
-      messageChannel.port1.onmessage = (event) => {
-        if (event.data.success) {
-          console.log('Audio cached:', event.data.url);
-          resolve(event.data);
-        } else {
-          console.error('Audio caching failed:', event.data.error);
-          reject(event.data);
-        }
-      };
-      
-      navigator.serviceWorker.controller.postMessage(
-        { type: 'CACHE_AUDIO', url: audioUrl },
-        [messageChannel.port2]
-      );
-    });
-  }
+/**
+ * Deletes an audio file from the AUDIO_CACHE.
+ * Sends a structured response back over the MessagePort.
+ *
+ * @param {string} url
+ * @param {MessagePort} port
+ */
+async function deleteAudioFile(url, port) {
+	try {
+		const cache = await caches.open(AUDIO_CACHE);
+		const deleted = await cache.delete(url);
+
+		port.postMessage({
+			type: 'DELETE_AUDIO_RESULT',
+			ok: deleted,
+			url,
+		});
+	} catch (err) {
+		port.postMessage({
+			type: 'DELETE_AUDIO_RESULT',
+			ok: false,
+			url,
+			error: err.message,
+		});
+	}
 }
 
-// Usage example:
-// cacheAudio('/audio/song.mp3');
-*/
+/**
+ * Deletes an audio file from the AUDIO_CACHE.
+ * Sends a structured response back over the MessagePort.
+ *
+ * @param {string} url
+ * @param {MessagePort} port
+ */
+async function checkAudioFile(url, port) {
+	try {
+		const cache = await caches.open(AUDIO_CACHE);
+		const match = await cache.match(url);
+		port.postMessage({
+			type: 'CHECK_AUDIO_RESULT',
+			ok: true,
+			cached: !!match,
+			url,
+		});
+	} catch (err) {
+		port.postMessage({
+			type: 'CHECK_AUDIO_RESULT',
+			ok: false,
+			error: err.message,
+			url,
+		});
+	}
+}

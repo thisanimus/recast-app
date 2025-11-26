@@ -15,7 +15,6 @@
 
 	--color-link-default: #1565c0;
 	--color-link-hover: #0d47a1;
-	--color-link-visited: #7b1fa2;
 
 	--color-shadow-intense: rgba(0, 0, 0, 0.2);
 	--color-shadow: rgba(0, 0, 0, 0.1);
@@ -39,7 +38,6 @@
 
 		--color-link-default: #64b5f6;
 		--color-link-hover: #bbdefb;
-		--color-link-visited: #ce93d8;
 
 		--color-shadow-intense: rgba(0, 0, 0, 0.3);
 		--color-shadow: rgba(0, 0, 0, 0.2);

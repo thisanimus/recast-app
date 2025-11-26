@@ -15,6 +15,7 @@
 @import '../components/podcast-episode.css';
 @import '../components/episode-player.css';
 @import '../components/play-pause.css';
+@import '../components/download-button.css';
 
 @import '../views/podcast-index.css';
 @import '../views/podcast-single.css';
