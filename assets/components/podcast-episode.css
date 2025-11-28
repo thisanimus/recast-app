@@ -23,6 +23,19 @@
 		font-size: 0.75rem;
 		color: var(--color-text-muted);
 	}
+	.explicit {
+		font-size: 0.7rem;
+		background-color: var(--color-text-muted);
+		color: var(--color-background);
+		font-weight: 800;
+		display: inline-block;
+		width: 1.2em;
+		height: 1.2em;
+		line-height: 1.2;
+		text-align: center;
+		vertical-align: 0.1em;
+		border-radius: 2px;
+	}
 	.append {
 		font-size: 0.8rem;
 		color: var(--color-text-muted);

@@ -41,6 +41,7 @@
 html {
 	font-size: 0.9rem;
 	scroll-behavior: smooth;
+	interpolate-size: allow-keywords;
 }
 
 body {

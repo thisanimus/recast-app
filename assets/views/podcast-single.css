@@ -4,6 +4,9 @@ podcast-single {
 		flex-direction: column;
 		align-items: center;
 		gap: var(--space-md);
+		margin-bottom: var(--space-md);
+		text-align: center;
+
 		.image {
 			max-width: 12rem;
 			border-radius: 10%;
@@ -11,6 +14,19 @@ podcast-single {
 		.title {
 			font-size: 1.5rem;
 			font-weight: 600;
+		}
+	}
+	.description {
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		height: 3rem;
+		transition: height 250ms, -webkit-line-clamp 0ms linear 250ms allow-discrete;
+		&[aria-expanded='true'] {
+			-webkit-line-clamp: unset;
+			height: auto;
+			transition: height 250ms, display 250ms;
 		}
 	}
 }

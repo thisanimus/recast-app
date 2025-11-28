@@ -1,12 +1,9 @@
 @import 'global/_base.css';
 @import 'global/_buttons.css';
-@import 'global/_code.css';
 @import 'global/_color-mode-auto.css';
-@import 'global/_dialog.css';
 @import 'global/_forms.css';
 @import 'global/_media.css';
 @import 'global/_range.css';
-@import 'global/_table.css';
 @import 'global/_typography.css';
 
 @import '../components/router-layout.css';
@@ -19,6 +16,3 @@
 
 @import '../views/podcast-index.css';
 @import '../views/podcast-single.css';
-a {
-	display: block;
-}

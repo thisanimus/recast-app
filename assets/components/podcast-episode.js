@@ -23,7 +23,11 @@ class PodcastEpisode extends HTMLElement {
 	}
 
 	makePrepend() {
-		let prependArray = [];
+		const prependArray = [];
+		if (this._episode.explicit === true) {
+			prependArray.push('<span class="explicit">E</span>');
+		}
+
 		const season = this._episode.season ? 'S' + this._episode.season + ' ' : '';
 		if (this._episode.type.toLowerCase() == 'trailer') {
 			prependArray.push(`${season}Trailer`);
@@ -36,6 +40,7 @@ class PodcastEpisode extends HTMLElement {
 			prependArray.push(`S${this._episode.season}/E${this._episode.episode}`);
 		}
 		prependArray.push(formatRFCDate(this._episode.pubDate));
+
 		return prependArray.join(' • ');
 	}
 

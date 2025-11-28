@@ -24,6 +24,7 @@
  * @property {string} guid - The episode unique identifier (unique key)
  * @property {string} image - The episode cover image URL
  * @property {string} audio - The episode audio file URL
+ * @property {boolean} explicit - If the episode contains explicit language
  * @property {string} type - The episode type
  * @property {number} season - The season
  * @property {number} episode - The episode number

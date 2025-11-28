@@ -124,3 +124,27 @@ export const parseDuration = (value) => {
 	// Fallback—just a number (rare)
 	return parts[0] || 0;
 };
+
+/**
+ * Parses a podcast RSS "explicit" field value into a boolean.
+ * According to Apple/Podcasting conventions:
+ * - explicit: "yes", "true", "explicit", "1"
+ * - clean/not explicit: "no", "false", "clean", "0"
+ *
+ * @param {string|null|undefined} value
+ * @returns {boolean} True if explicit, False if clean/not explicit
+ */
+export const parseExplicit = (value) => {
+	if (value == null) return false;
+
+	const v = String(value).trim().toLowerCase();
+
+	const explicitValues = new Set(['yes', 'true', 'explicit', '1']);
+	const cleanValues = new Set(['no', 'false', 'clean', '0']);
+
+	if (explicitValues.has(v)) return true;
+	if (cleanValues.has(v)) return false;
+
+	// If it's something unknown: safest default = false (clean)
+	return false;
+};

@@ -82,6 +82,11 @@ class PodcastSingle extends HTMLElement {
 			}
 			this.updateSubscribeButton();
 		});
+
+		this.refs.description.addEventListener('click', (e) => {
+			const status = e.target.getAttribute('aria-expanded');
+			this.refs.description.setAttribute('aria-expanded', status == 'true' ? 'false' : 'true');
+		});
 	}
 	updateSubscribeButton() {
 		this.refs.subscriptionButton.textContent = this.isSubscribed ? 'Unsubscribe' : '+ Subscribe';

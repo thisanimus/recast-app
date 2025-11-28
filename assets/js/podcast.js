@@ -4,7 +4,7 @@
  */
 
 import { Db } from './db.js';
-import { parseDuration, proxyFetch } from './utilities.js';
+import { parseDuration, parseExplicit, proxyFetch } from './utilities.js';
 
 /**
  * Fetches and parses a podcast RSS feed, with automatic fallback to proxy for CORS issues.
@@ -73,7 +73,7 @@ export const fetchPodcast = async (feedUrl) => {
 		author: text(channel, 'author', 'managingEditor'),
 		category:
 			text(channel, 'category') || channel.querySelector('category')?.getAttribute('text') || text(channel, 'category'),
-		explicit: (text(channel, 'explicit') || 'no').toLowerCase().startsWith('y'),
+		explicit: parseExplicit(text(channel, 'explicit')),
 		subtitle: text(channel, 'subtitle'),
 	};
 
@@ -91,6 +91,7 @@ export const fetchPodcast = async (feedUrl) => {
 			guid: text(item, 'guid') || attr(item, 'guid', 'isPermaLink'),
 			image: resolveImage(item),
 			audio: attr(item, 'enclosure', 'url') || attr(item, 'content', 'url'),
+			explicit: parseExplicit(text(item, 'explicit')),
 			type: text(item, 'episodeType'),
 			season: text(item, 'season'),
 			episode: text(item, 'episode'),

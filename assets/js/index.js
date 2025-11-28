@@ -55,7 +55,7 @@ if (podcast && episodes) {
 	Db.episodes.upsert(episodes);
 }
 
-	*/
+*/
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
 		.register('/service-worker.js')

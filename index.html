@@ -23,8 +23,10 @@
 				<podcast-search>
 					<form name="search-form">
 						<label for="search" class="hidden">Search</label>
-						<input id="search" type="search" placeholder="Enter an RSS feed url, or an Apple Podcasts url"/>
-						<button>Search</button>
+						<div class="input-row">
+							<input type="url" name="url" id="url" placeholder="Enter an RSS feed url, or an Apple Podcasts url" pattern="https://.*" required/>
+							<button>Search</button>
+						</div>
 					</form>
 					<a href="https://castos.com/tools/find-podcast-rss-feed/" target="_blank">Find Podcast URLs</a>
 				</podcast-search>
@@ -42,7 +44,7 @@
 							<div class="title"></div>
 						</div>
 						<button id="subscription">+ Subscribe</button>
-						<div class="description"></div>
+						<div class="description" aria-expaned="false"></div>
 					</header>
 
 					<ol class="episodes"></ol>

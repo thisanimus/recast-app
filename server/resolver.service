@@ -1,0 +1,14 @@
+[Unit]
+Description=URL Resolver
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/resolver
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
