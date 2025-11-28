@@ -29,10 +29,11 @@ class PodcastEpisode extends HTMLElement {
 		}
 
 		const season = this._episode.season ? 'S' + this._episode.season + ' ' : '';
-		if (this._episode.type.toLowerCase() == 'trailer') {
+		const type = this._episode.type;
+		if (type && type.toLowerCase() == 'trailer') {
 			prependArray.push(`${season}Trailer`);
 		}
-		if (this._episode.type.toLowerCase() == 'bonus') {
+		if (type && type.toLowerCase() == 'bonus') {
 			prependArray.push(`${season}Bonus`);
 		}
 		// eg S1/E1

@@ -1,24 +1,22 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.017';
+const CACHE_VERSION = 'v0.018';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio`;
 const PROXY_PREFIX = 'https://proxy.thisanimus.com/?url=';
 
 // Add your local files here
+// generate this with find "$(pwd)" -type f
 const STATIC_FILES = [
 	'/index.html',
 	'/manifest.json',
 	'/assets/css/style.css',
 	'/assets/css/global/_typography.css',
-	'/assets/css/global/_code.css',
 	'/assets/css/global/_color-mode-auto.css',
 	'/assets/css/global/_forms.css',
-	'/assets/css/global/_table.css',
 	'/assets/css/global/_media.css',
 	'/assets/css/global/_range.css',
 	'/assets/css/global/_base.css',
-	'/assets/css/global/_dialog.css',
 	'/assets/css/global/_buttons.css',
 	'/assets/js/icons.js',
 	'/assets/js/onSwipe.js',
@@ -33,21 +31,21 @@ const STATIC_FILES = [
 	'/assets/img/screenshot-2.png',
 	'/assets/img/screenshot-3.png',
 	'/assets/img/screenshot-1.png',
-	'/assets/components/download-button.css',
-	'/assets/components/download-button.js',
-	'/assets/components/episode-player.css',
-	'/assets/components/episode-player.js',
-	'/assets/components/network-status.js',
 	'/assets/components/play-pause.css',
-	'/assets/components/play-pause.js',
-	'/assets/components/podcast-episode.css',
-	'/assets/components/podcast-episode.js',
-	'/assets/components/router-layout.css',
-	'/assets/components/router-layout.js',
 	'/assets/components/router-nav.css',
+	'/assets/components/network-status.js',
+	'/assets/components/download-button.css',
+	'/assets/components/episode-player.css',
 	'/assets/components/router-nav.js',
 	'/assets/components/router-view.css',
+	'/assets/components/router-layout.css',
+	'/assets/components/episode-player.js',
+	'/assets/components/podcast-episode.css',
 	'/assets/components/router-view.js',
+	'/assets/components/router-layout.js',
+	'/assets/components/podcast-episode.js',
+	'/assets/components/download-button.js',
+	'/assets/components/play-pause.js',
 	'/assets/appicon/icon-192x192.png',
 	'/assets/appicon/icon.png',
 	'/assets/appicon/apple-touch-icon.png',
