@@ -4,6 +4,17 @@ router-layout {
 	height: 100svh;
 	grid-template-rows: 1fr var(--player-minimized-height) var(--router-nav-height);
 	overflow: hidden;
+	> * {
+		grid-column: 1;
+	}
+	.fade {
+		position: relative;
+		grid-row: 1;
+		align-self: end;
+		height: var(--space-md);
+		background: linear-gradient(to top, var(--color-background), transparent);
+		z-index: 9;
+	}
 }
 
 ::view-transition-old(old-view) {

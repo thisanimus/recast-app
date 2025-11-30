@@ -1,15 +1,16 @@
-import { Db } from '../js/db.js';
+import { Db } from '../data/db.js';
 import { fetchPodcast, cacheAudio } from '../js/podcast.js';
 
 /**
- * @typedef {import('../js/db.js').Podcast} Podcast
- * @typedef {import('../js/db.js').Episode} Episode
+ * @typedef {import('../data/db.js').Podcast} Podcast
+ * @typedef {import('../data/db.js').Episode} Episode
  */
 
-class PodcastSingle extends HTMLElement {
+class ViewSingle extends HTMLElement {
 	constructor() {
 		super();
 		this.q = new URLSearchParams(window.location.search);
+		this.online = navigator.onLine;
 		this.refs = {
 			view: this.closest('router-view'),
 			image: this.querySelector('.image'),
@@ -62,14 +63,17 @@ class PodcastSingle extends HTMLElement {
 		window.addEventListener('urlchange', () => {
 			this.q = new URLSearchParams(window.location.search);
 			if (this.q.get('view') !== 'podcast') {
-				this.refs.view.removeAttribute('ready');
 				this.isSubscribed = false;
 				this.podcast = null;
-				this.episodes = null;
+				this.episodes = [];
+				this.refs.image.src = '/assets/img/default-episode-image.webp';
 			} else {
 				this.loadPodcast();
 			}
 		});
+
+		window.addEventListener('online', () => this.setOlineStatus(true));
+		window.addEventListener('offline', () => this.setOlineStatus(false));
 
 		this.refs.subscriptionButton.addEventListener('click', async () => {
 			const { podcast, episodes, isSubscribed } = this;
@@ -88,6 +92,11 @@ class PodcastSingle extends HTMLElement {
 			this.refs.description.setAttribute('aria-expanded', status == 'true' ? 'false' : 'true');
 		});
 	}
+
+	setOlineStatus(online) {
+		this.online = online;
+		this.dataset.online = this.online.toString();
+	}
 	updateSubscribeButton() {
 		this.refs.subscriptionButton.textContent = this.isSubscribed ? 'Unsubscribe' : '+ Subscribe';
 	}
@@ -96,12 +105,14 @@ class PodcastSingle extends HTMLElement {
 		this.episodes.reverse().forEach((ep) => {
 			const el = document.createElement('podcast-episode');
 			el.episode = ep;
+			el.online = this.online;
 			episodeList.appendChild(el);
 		});
 		this.refs.episodes.replaceChildren(episodeList);
 	}
 
 	render() {
+		this.dataset.online = this.online.toString();
 		const imageSrc = this.podcast.image || '/assets/img/default-episode-image.webp';
 		this.refs.image.src = imageSrc;
 		this.refs.title.textContent = this.podcast.title;
@@ -113,4 +124,4 @@ class PodcastSingle extends HTMLElement {
 		this.refs.view.setAttribute('ready', true);
 	}
 }
-customElements.define('podcast-single', PodcastSingle);
+customElements.define('view-single', ViewSingle);

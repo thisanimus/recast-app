@@ -14,5 +14,5 @@
 @import '../components/play-pause.css';
 @import '../components/download-button.css';
 
-@import '../views/podcast-index.css';
-@import '../views/podcast-single.css';
+@import '../views/view-index.css';
+@import '../views/view-single.css';

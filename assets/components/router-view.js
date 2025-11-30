@@ -12,5 +12,13 @@ class RouterView extends HTMLElement {
 			this[name] = newValue;
 		}
 	}
+	connectedCallback() {
+		window.addEventListener('urlchange', () => {
+			const q = new URLSearchParams(window.location.search);
+			if (q.get('view') !== this.id) {
+				this.removeAttribute('ready');
+			}
+		});
+	}
 }
 customElements.define('router-view', RouterView);

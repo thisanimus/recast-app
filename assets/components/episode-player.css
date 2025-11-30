@@ -1,7 +1,6 @@
 episode-player {
 	user-select: none;
 	box-sizing: border-box;
-	position: fixed;
 	z-index: 10;
 	top: 0;
 	height: 100%;
@@ -11,6 +10,8 @@ episode-player {
 	background: var(--color-background-intense);
 	display: grid;
 	grid-template-rows: 1fr 5rem;
+	grid-row: 1 / -1;
+	grid-column: 1;
 	padding: var(--space-md);
 
 	img {

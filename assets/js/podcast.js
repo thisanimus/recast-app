@@ -1,9 +1,9 @@
 /**
- * @typedef {import('./db.js').Podcast} Podcast
- * @typedef {import('./db.js').Episode} Episode
+ * @typedef {import('../data/db.js').Podcast} Podcast
+ * @typedef {import('../data/db.js').Episode} Episode
  */
 
-import { Db } from './db.js';
+import { Db } from '../data/db.js';
 import { parseDuration, parseExplicit, proxyFetch } from './utilities.js';
 
 /**

@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_VERSION = 'v0.018';
+const CACHE_VERSION = 'v0.022';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio`;
@@ -8,7 +8,7 @@ const PROXY_PREFIX = 'https://proxy.thisanimus.com/?url=';
 // Add your local files here
 // generate this with find "$(pwd)" -type f
 const STATIC_FILES = [
-	'/index.html',
+	/*'/index.html',
 	'/manifest.json',
 	'/assets/css/style.css',
 	'/assets/css/global/_typography.css',
@@ -54,11 +54,11 @@ const STATIC_FILES = [
 	'/assets/appicon/icon-512x512-maskable.png',
 	'/assets/appicon/icon-512x512.png',
 	'/assets/appicon/icon-maskable.svg',
-	'/assets/views/podcast-single.css',
-	'/assets/views/podcast-search.js',
-	'/assets/views/podcast-index.css',
-	'/assets/views/podcast-index.js',
-	'/assets/views/podcast-single.js',
+	'/assets/views/view-single.css',
+	'/assets/views/view-add.js',
+	'/assets/views/view-index.css',
+	'/assets/views/view-index.js',
+	'/assets/views/view-single.js',*/
 ];
 
 self.addEventListener('install', (event) => {

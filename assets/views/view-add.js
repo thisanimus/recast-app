@@ -39,4 +39,4 @@ class PodcastSearch extends HTMLElement {
 		});
 	}
 }
-customElements.define('podcast-search', PodcastSearch);
+customElements.define('view-add', PodcastSearch);

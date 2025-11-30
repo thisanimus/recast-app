@@ -81,8 +81,8 @@ export class RouterLayout extends HTMLElement {
 		if (!enteringView) return;
 
 		const t = transitions.find((t) => t.nav.includes(nav));
-		document.documentElement.style.setProperty('--exit-animation', t.exit);
-		document.documentElement.style.setProperty('--enter-animation', t.enter);
+		document.documentElement.style.setProperty('--exit-animation', t?.exit || 'fade-out');
+		document.documentElement.style.setProperty('--enter-animation', t?.enter || 'fade-in');
 
 		enteringView.scrollTop = 0;
 

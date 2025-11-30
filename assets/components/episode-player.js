@@ -1,12 +1,12 @@
-import { Db } from '../js/db.js';
+import { Db } from '../data/db.js';
 import { onSwipe } from '../js/onSwipe.js';
 import { setLockscreenMedia } from '../js/podcast.js';
-import { Settings } from '../js/settings.js';
+import { Settings } from '../data/settings.js';
 import { secToTime } from '../js/utilities.js';
 
 /**
- * @typedef {import('../js/db.js').Podcast} Podcast
- * @typedef {import('../js/db.js').Episode} Episode
+ * @typedef {import('../data/db.js').Podcast} Podcast
+ * @typedef {import('../data/db.js').Episode} Episode
  */
 
 export class EpisodePlayer extends HTMLElement {
@@ -15,7 +15,7 @@ export class EpisodePlayer extends HTMLElement {
 	}
 	constructor() {
 		super();
-		this.guid = this.getAttribute('guid') || Settings.data.currentEpisode || null;
+		this.guid = this.getAttribute('guid') || Settings.stored.currentEpisode || null;
 		this.minimized = this.getAttribute('minimized');
 
 		this.refs = {
@@ -44,7 +44,7 @@ export class EpisodePlayer extends HTMLElement {
 		if (oldValue !== newValue && this[name] !== newValue) {
 			this[name] = newValue;
 			if (name == 'guid') {
-				Settings.setProp('currentEpisode', newValue);
+				Settings.setStored('currentEpisode', newValue);
 				this.loadEpisode();
 			}
 			if (name == 'minimized') {
@@ -81,7 +81,7 @@ export class EpisodePlayer extends HTMLElement {
 
 		// increment the playback rate
 		this.refs.playbackRate.addEventListener('click', () => {
-			const speedIndex = this.rates.indexOf(Settings.data.playbackRate);
+			const speedIndex = this.rates.indexOf(Settings.stored.playbackRate);
 			const nextIndex = speedIndex == this.rates.length ? 0 : speedIndex + 1;
 			this.setPlaybackRate(this.rates[nextIndex]);
 		});
@@ -127,13 +127,13 @@ export class EpisodePlayer extends HTMLElement {
 			this.loadEpisode();
 		}
 		// set playbackRate
-		if (this.refs.audio.playbackRate !== Settings.data.playbackRate) {
-			this.setPlaybackRate(Settings.data.playbackRate || 1);
+		if (this.refs.audio.playbackRate !== Settings.stored.playbackRate) {
+			this.setPlaybackRate(Settings.stored.playbackRate || 1);
 		}
 	}
 	async loadEpisode() {
-		if (!this.guid && Settings.data.currentEpisode) {
-			this.setAttribute('guid', Settings.data.currentEpisode);
+		if (!this.guid && Settings.stored.currentEpisode) {
+			this.setAttribute('guid', Settings.stored.currentEpisode);
 		}
 		if (this.guid) {
 			const episode = await Db.episodes.read(this.guid);
@@ -151,7 +151,7 @@ export class EpisodePlayer extends HTMLElement {
 	setPlaybackRate(rate = 1) {
 		this.refs.audio.playbackRate = rate;
 		this.refs.playbackRate.textContent = `${rate}x`;
-		Settings.setProp('playbackRate', rate);
+		Settings.setStored('playbackRate', rate);
 	}
 
 	seek(s) {

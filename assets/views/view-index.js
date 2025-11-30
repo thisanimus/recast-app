@@ -1,9 +1,9 @@
-import { Db } from '../js/db.js';
+import { Db } from '../data/db.js';
 /**
- * @typedef {import('../js/db.js').Podcast} Podcast
+ * @typedef {import('../data/db.js').Podcast} Podcast
  */
 
-export class PodcastIndex extends HTMLElement {
+export class ViewIndex extends HTMLElement {
 	constructor() {
 		super();
 		this.refs = {
@@ -43,4 +43,4 @@ export class PodcastIndex extends HTMLElement {
 		this.refs.view.setAttribute('ready', true);
 	}
 }
-customElements.define('podcast-index', PodcastIndex);
+customElements.define('view-index', ViewIndex);

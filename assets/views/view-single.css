@@ -1,4 +1,4 @@
-podcast-single {
+view-single {
 	header {
 		display: flex;
 		flex-direction: column;
@@ -17,6 +17,7 @@ podcast-single {
 		}
 	}
 	.description {
+		text-align: left;
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-box-orient: vertical;

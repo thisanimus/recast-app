@@ -1,7 +1,7 @@
 import { formatRFCDate, secondsToTextTime } from '../js/utilities.js';
 /**
- * @typedef {import('../js/db.js').Podcast} Podcast
- * @typedef {import('../js/db.js').Episode} Episode
+ * @typedef {import('../data/db.js').Podcast} Podcast
+ * @typedef {import('../data/db.js').Episode} Episode
  */
 
 class PodcastEpisode extends HTMLElement {

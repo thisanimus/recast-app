@@ -5,12 +5,10 @@ import '../components/episode-player.js';
 import '../components/podcast-episode.js';
 import '../components/download-button.js';
 import '../components/play-pause.js';
-import '../views/podcast-index.js';
-import '../views/podcast-single.js';
-import '../views/podcast-search.js';
-
-import { Settings } from './settings.js';
-import { refreshAll } from './podcast.js';
+import '../views/view-index.js';
+import '../views/view-single.js';
+import '../views/view-add.js';
+import '../views/view-settings.js';
 
 (function () {
 	const originalPushState = history.pushState;
@@ -35,12 +33,6 @@ document.querySelectorAll('img').forEach((img) => {
 
 //await refreshAll();
 
-const persistButton = document.getElementById('persist');
-if (persistButton) {
-	persistButton.addEventListener('click', async (e) => {
-		await Settings.requestPersistentStorage();
-	});
-}
 /*
 const podcasts = [
 	'https://deepspacerobots.com/jukebox/feed.xml',
@@ -56,6 +48,7 @@ if (podcast && episodes) {
 }
 
 */
+
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
 		.register('/service-worker.js')

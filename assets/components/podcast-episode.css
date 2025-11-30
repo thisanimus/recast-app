@@ -40,6 +40,9 @@
 		font-size: 0.8rem;
 		color: var(--color-text-muted);
 	}
+	play-pause {
+		grid-column: 3;
+	}
 
 	.icon-wrapper {
 		--size: 2.5rem;
@@ -73,5 +76,13 @@
 				background: conic-gradient(currentColor var(--angle), var(--color-ui-muted) 0deg);
 			}
 		}
+	}
+}
+[data-online='false'] {
+	[downloaded='false'] {
+		display: none;
+	}
+	[downloaded='false'] + play-pause {
+		display: none;
 	}
 }

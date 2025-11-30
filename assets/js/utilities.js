@@ -148,3 +148,21 @@ export const parseExplicit = (value) => {
 	// If it's something unknown: safest default = false (clean)
 	return false;
 };
+
+/**
+ * Formats a byte value into a human-readable string (KB, MB, GB, TB).
+ * @param {number} bytes The number of bytes.
+ * @param {number} decimals The number of decimal places to include (default 2).
+ * @returns {string} The formatted size string.
+ */
+export const formatBytes = (bytes, decimals = 2) => {
+	if (bytes === 0) return '0 Bytes';
+
+	const base = 1024;
+	const units = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+	const unitIndex = Math.floor(Math.log(bytes) / Math.log(base));
+	const value = bytes / Math.pow(base, unitIndex);
+
+	return `${value.toFixed(decimals)} ${units[unitIndex]}`;
+};
