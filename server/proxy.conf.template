@@ -63,9 +63,8 @@ limit_req_zone $binary_remote_addr zone=proxy:10m rate=1r/s;
 limit_req_status 429;
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name ${DEPLOY_HOST};
 
     # Cloudflare Origin Certificate — installed manually, once (the key never
