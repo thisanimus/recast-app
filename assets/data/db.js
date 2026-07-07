@@ -75,6 +75,7 @@ class PodcastAppDB {
 					const episodeStore = db.createObjectStore('episodes', { keyPath: 'guid' });
 					episodeStore.createIndex('guid', 'guid', { unique: true });
 					episodeStore.createIndex('podcast', 'podcast', { unique: false });
+					episodeStore.createIndex('pubDate', 'pubDate', { unique: false });
 				}
 			};
 		});

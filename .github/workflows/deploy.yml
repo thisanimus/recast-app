@@ -1,0 +1,94 @@
+name: Deploy
+
+# Required repository secrets:
+#   SSH_PRIVATE_KEY  – private key whose public half is in the server's authorized_keys
+#   DEPLOY_HOST      – server hostname / IP
+#   DEPLOY_USER      – login user (has passwordless sudo)
+#
+# Assumptions:
+#   - the server is linux/amd64
+#   - this box runs the CORS proxy only (no repo checkout needed)
+
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', '.github/workflows/deploy.yml']
+  workflow_dispatch: {}
+
+# Never let two deploys race.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Job-level env so it can read secrets (workflow-level env cannot).
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      BIN_DIR: /opt/cors-proxy
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: server/go.mod
+          cache: false # pure stdlib, no go.sum to cache
+
+      # Static, stripped linux/amd64 binary. A build failure stops the deploy here.
+      - name: Build proxy
+        working-directory: server
+        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o proxy .
+
+      - name: Vet
+        working-directory: server
+        run: go vet ./...
+
+      # Substitute only ${DEPLOY_HOST}; nginx's own $variables are left intact.
+      - name: Render nginx config
+        run: envsubst '${DEPLOY_HOST}' < server/proxy.conf.template > server/proxy.conf
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # Ship the three artifacts to the user's home dir; install them from there.
+      - name: Copy files
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            server/proxy \
+            server/proxy.service \
+            server/proxy.conf \
+            "$DEPLOY_USER@$DEPLOY_HOST:~/"
+
+      - name: Install and restart
+        run: |
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            BIN_DIR="$BIN_DIR" 'bash -euo pipefail -s' <<'REMOTE'
+            sudo install -o root -g root -m 0755 proxy "$BIN_DIR/proxy"
+            sudo install -o root -g root -m 0644 proxy.service \
+              /etc/systemd/system/proxy.service
+            sudo install -o root -g root -m 0644 proxy.conf \
+              /etc/nginx/sites-available/proxy.conf
+            sudo ln -sf /etc/nginx/sites-available/proxy.conf \
+              /etc/nginx/sites-enabled/proxy.conf
+            rm -f proxy proxy.service proxy.conf
+
+            # Restart the proxy on the new binary/unit.
+            sudo systemctl daemon-reload
+            sudo systemctl enable proxy
+            sudo systemctl restart proxy
+
+            # Validate nginx before reloading so a bad config can't take the site down.
+            sudo nginx -t
+            sudo systemctl reload nginx
+
+            # Fail the job if the proxy didn't come back up.
+            sleep 1
+            sudo systemctl is-active --quiet proxy
+            echo "Deployed proxy successfully"
+          REMOTE

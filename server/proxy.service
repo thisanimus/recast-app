@@ -1,0 +1,25 @@
+[Unit]
+Description=CORS proxy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Build on the box:  cd /opt/cors-proxy && go build -o proxy .
+ExecStart=/opt/cors-proxy/proxy
+Environment=PORT=8080
+# Environment=ALLOW_PRIVATE=1   # dev only: disables the SSRF guard
+Restart=always
+RestartSec=2
+
+# Run unprivileged and locked down; it only needs outbound network.
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

@@ -40,6 +40,7 @@ class ViewSingle extends HTMLElement {
 		if (!feedUrl) return;
 
 		// Try DB first
+		await fetchPodcast(feedUrl);
 		const podcast = await Db.podcasts.read(feedUrl);
 		if (podcast) {
 			this.podcast = podcast;
@@ -72,8 +73,8 @@ class ViewSingle extends HTMLElement {
 			}
 		});
 
-		window.addEventListener('online', () => this.setOlineStatus(true));
-		window.addEventListener('offline', () => this.setOlineStatus(false));
+		window.addEventListener('online', () => this.setOnlineStatus(true));
+		window.addEventListener('offline', () => this.setOnlineStatus(false));
 
 		this.refs.subscriptionButton.addEventListener('click', async () => {
 			const { podcast, episodes, isSubscribed } = this;
@@ -93,7 +94,7 @@ class ViewSingle extends HTMLElement {
 		});
 	}
 
-	setOlineStatus(online) {
+	setOnlineStatus(online) {
 		this.online = online;
 		this.dataset.online = this.online.toString();
 	}

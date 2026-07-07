@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="view-index">
 	<head>
 		<meta charset="UTF-8" />
@@ -13,13 +13,13 @@
 	</head>
 	<body>
 		<router-layout>
-			<router-view id="index" state="active">
+			<router-view id="index" state="active" level="1">
 				<h1>Podcasts</h1>
 				<view-index>
 					<div class="grid"></div>
 				</view-index>
 			</router-view>
-			<router-view id="add" state="inactive">
+			<router-view id="add" state="inactive" level="0">
 				<view-add>
 					<form name="search-form">
 						<label for="search" class="hidden">Search</label>
@@ -38,7 +38,7 @@
 					<a href="https://castos.com/tools/find-podcast-rss-feed/" target="_blank">Find Podcast URLs</a>
 				</view-add>
 			</router-view>
-			<router-view id="podcast" state="inactive">
+			<router-view id="podcast" state="inactive" level="2">
 				<view-single>
 					<header>
 						<img class="image" />
@@ -57,10 +57,10 @@
 					<ol class="episodes"></ol>
 				</view-single>
 			</router-view>
-			<router-view id="episode" state="inactive">
+			<router-view id="episode" state="inactive" level="3">
 				<h1>Episode</h1>
 			</router-view>
-			<router-view id="settings" state="inactive">
+			<router-view id="settings" state="inactive" level="0">
 				<view-settings>
 					<h1>Settings</h1>
 					<div class="settings-section">
@@ -173,8 +173,10 @@
 								d="M112 328l144-144 144 144"
 							/>
 						</svg>
-					</button></div></episode-player
-			><router-nav>
+					</button>
+				</div>
+			</episode-player>
+			<router-nav>
 				<a class="router-link" href="?view=add">
 					<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 512 512">
 						<path

@@ -20,12 +20,10 @@ const STATIC_FILES = [
 	'/assets/css/global/_buttons.css',
 	'/assets/js/icons.js',
 	'/assets/js/onSwipe.js',
-	'/assets/js/db.js',
 	'/assets/js/index.js',
 	'/assets/js/podcast.js',
 	'/assets/js/utilities.js',
 	'/assets/js/shared.js',
-	'/assets/js/settings.js',
 	'/assets/img/default-episode-image.webp',
 	'/assets/img/screenshot.psd',
 	'/assets/img/screenshot-2.png',
@@ -54,11 +52,14 @@ const STATIC_FILES = [
 	'/assets/appicon/icon-512x512-maskable.png',
 	'/assets/appicon/icon-512x512.png',
 	'/assets/appicon/icon-maskable.svg',
-	'/assets/views/view-single.css',
-	'/assets/views/view-add.js',
-	'/assets/views/view-index.css',
+	'/assets/data/db.js',
+	'/assets/data/settings.js',
+	'/assets/views/view-settings.js',
 	'/assets/views/view-index.js',
+	'/assets/views/view-add.js',
 	'/assets/views/view-single.js',
+	'/assets/views/view-single.css',
+	'/assets/views/view-index.css',
 ];
 
 self.addEventListener('install', (event) => {
@@ -71,7 +72,7 @@ self.addEventListener('install', (event) => {
 				console.log('Caching static files');
 				return cache.addAll(STATIC_FILES);
 			})
-			.then(() => self.skipWaiting())
+			.then(() => self.skipWaiting()),
 	);
 });
 
@@ -93,10 +94,10 @@ self.addEventListener('activate', (event) => {
 								(name.startsWith('audio') && name !== AUDIO_CACHE)
 							);
 						})
-						.map((name) => caches.delete(name))
+						.map((name) => caches.delete(name)),
 				);
 			})
-			.then(() => self.clients.claim())
+			.then(() => self.clients.claim()),
 	);
 });
 

@@ -1,0 +1,125 @@
+# nginx front for the Go CORS proxy (listens on 127.0.0.1:8080).
+#
+# Sits behind Cloudflare in Full (Strict) mode:
+#   - TLS uses a Cloudflare Origin Certificate (15-year, no renewal). Install it
+#     once on the box at the paths below; it is NOT in this repo.
+#   - Authenticated Origin Pulls: nginx requires Cloudflare's client cert, so the
+#     origin refuses any connection that didn't come through Cloudflare — nobody
+#     can bypass the CF WAF/rate-limits by hitting the origin IP directly.
+#   - real_ip restores the true client IP from CF-Connecting-IP, without which
+#     the per-IP rate limit would throttle all users as one Cloudflare edge.
+#   - CDN-Cache-Control: no-store tells Cloudflare not to cache proxied responses
+#     (audio, ?url= dynamic content, Range) while leaving the browser's own
+#     caching (from the upstream's Cache-Control) untouched.
+#   - No port 80 / ACME block: there's no Let's Encrypt cert to renew. Let
+#     Cloudflare's "Always Use HTTPS" handle the browser-side redirect.
+#
+# This is a TEMPLATE: the DEPLOY_HOST placeholder is substituted at deploy time
+# from the CI secret of the same name. All other $variables are nginx's own.
+#
+# Key choices for a *streaming* proxy:
+#   - proxy_buffering off: stream audio straight through instead of spooling the
+#     whole body to a temp file first (which would wreck seek latency and disk).
+#   - long read/send timeouts: a slow client dragging a large episode down must
+#     not be cut off between reads.
+#   - CORS is NOT set here. The Go app owns it; adding it again would emit two
+#     Access-Control-Allow-Origin values and the browser would reject every
+#     response. Keep it in exactly one place.
+
+upstream cors_proxy {
+    server 127.0.0.1:8080;
+    keepalive 64;            # reuse upstream connections; pairs with the two proxy_set_header lines below
+}
+
+# Trust Cloudflare's edge and read the real client IP from CF-Connecting-IP.
+# Keep these ranges current from https://www.cloudflare.com/ips/
+set_real_ip_from 173.245.48.0/20;
+set_real_ip_from 103.21.244.0/22;
+set_real_ip_from 103.22.200.0/22;
+set_real_ip_from 103.31.4.0/22;
+set_real_ip_from 141.101.64.0/18;
+set_real_ip_from 108.162.192.0/18;
+set_real_ip_from 190.93.240.0/20;
+set_real_ip_from 188.114.96.0/20;
+set_real_ip_from 197.234.240.0/22;
+set_real_ip_from 198.41.128.0/17;
+set_real_ip_from 162.158.0.0/15;
+set_real_ip_from 104.16.0.0/13;
+set_real_ip_from 104.24.0.0/14;
+set_real_ip_from 172.64.0.0/13;
+set_real_ip_from 131.0.72.0/22;
+set_real_ip_from 2400:cb00::/32;
+set_real_ip_from 2606:4700::/32;
+set_real_ip_from 2803:f800::/32;
+set_real_ip_from 2405:b500::/32;
+set_real_ip_from 2405:8100::/32;
+set_real_ip_from 2a06:98c0::/29;
+set_real_ip_from 2c0f:f248::/32;
+real_ip_header CF-Connecting-IP;
+
+# Rate limit: 1 request/sec per client IP. real_ip above makes $binary_remote_addr
+# the true visitor rather than the Cloudflare edge. 10m holds ~160k distinct IPs.
+limit_req_zone $binary_remote_addr zone=proxy:10m rate=1r/s;
+limit_req_status 429;
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${DEPLOY_HOST};
+
+    # Cloudflare Origin Certificate — installed manually, once (the key never
+    # touches the repo). chmod 600 the key, owned by root.
+    ssl_certificate     /etc/ssl/cloudflare/origin.pem;
+    ssl_certificate_key /etc/ssl/cloudflare/origin.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Authenticated Origin Pulls: only Cloudflare presents a cert signed by this
+    # CA, so direct-to-origin traffic is rejected with 400. Enable the zone-level
+    # toggle in the CF dashboard AND install this CA *before* this conf goes live,
+    # or nginx -t fails and every request (CF included) is refused.
+    ssl_client_certificate /etc/ssl/cloudflare/origin_pull_ca.pem;
+    ssl_verify_client on;
+
+    # Audio POSTs are not expected; allow a small body and no more.
+    client_max_body_size 16m;
+
+    # Don't re-compress: upstream already forwards the origin's Content-Encoding
+    # untouched, and gzip forces buffering which breaks streaming.
+    gzip off;
+
+    location / {
+        # 1r/s steady; burst=5 nodelay lets a short cluster of requests through
+        # immediately (e.g. feed + Apple-resolve on one page load) without
+        # queuing, while the long-run average stays pinned at 1r/s per IP.
+        # Over-limit requests get 429 rather than being delayed.
+        limit_req zone=proxy burst=5 nodelay;
+
+        # Keep Cloudflare from caching proxied responses; browser caching (the
+        # upstream's Cache-Control) is unaffected.
+        add_header CDN-Cache-Control "no-store" always;
+
+        proxy_pass http://cors_proxy;
+
+        # Keep-alive to the Go upstream.
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Stream, don't spool: essential for large audio and Range/206 responses.
+        proxy_buffering         off;
+        proxy_request_buffering off;
+        proxy_max_temp_file_size 0;
+
+        # A slow download must survive gaps between reads.
+        proxy_connect_timeout 15s;
+        proxy_send_timeout    1h;
+        proxy_read_timeout    1h;
+    }
+}

@@ -31,11 +31,11 @@ class PodcastAppSettings {
 	}
 
 	addEventListeners() {
-		window.addEventListener('online', () => this.setOlineStatus(true));
-		window.addEventListener('offline', () => this.setOlineStatus(false));
+		window.addEventListener('online', () => this.setOnlineStatus(true));
+		window.addEventListener('offline', () => this.setOnlineStatus(false));
 	}
 
-	setOlineStatus(online) {
+	setOnlineStatus(online) {
 		if (online !== this.online) {
 			this.online = online;
 			console.log('Online changed:', online);
