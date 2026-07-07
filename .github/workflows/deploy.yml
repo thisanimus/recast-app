@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     # Job-level env so it can read secrets (workflow-level env cannot).
     env:
+      DEPLOY_IP: ${{ secrets.DEPLOY_IP }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       BIN_DIR: /opt/cors-proxy
@@ -54,7 +55,7 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -H "$DEPLOY_IP" >> ~/.ssh/known_hosts 2>/dev/null
 
       # Ship the three artifacts to the user's home dir; install them from there.
       - name: Copy files
@@ -63,11 +64,11 @@ jobs:
             server/proxy \
             server/proxy.service \
             server/proxy.conf \
-            "$DEPLOY_USER@$DEPLOY_HOST:~/"
+            "$DEPLOY_USER@$DEPLOY_IP:~/"
 
       - name: Install and restart
         run: |
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_IP" \
             BIN_DIR="$BIN_DIR" 'bash -euo pipefail -s' <<'REMOTE'
             sudo mkdir -p "$BIN_DIR"
             sudo install -o root -g root -m 0755 proxy "$BIN_DIR/proxy"
