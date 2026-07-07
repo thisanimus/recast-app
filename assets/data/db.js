@@ -43,7 +43,8 @@
 class PodcastAppDB {
 	constructor() {
 		this.dbName = 'PodcastAppDB';
-		this.version = 1;
+		// Kept at 3: IndexedDB versions can't be lowered without a VersionError.
+		this.version = 5;
 		this.db = null;
 	}
 
@@ -75,7 +76,6 @@ class PodcastAppDB {
 					const episodeStore = db.createObjectStore('episodes', { keyPath: 'guid' });
 					episodeStore.createIndex('guid', 'guid', { unique: true });
 					episodeStore.createIndex('podcast', 'podcast', { unique: false });
-					episodeStore.createIndex('pubDate', 'pubDate', { unique: false });
 				}
 			};
 		});
@@ -337,7 +337,12 @@ class PodcastAppDB {
 
 			return new Promise((resolve, reject) => {
 				const request = index.getAll(feedUrl);
-				request.onsuccess = () => resolve(request.result);
+				request.onsuccess = () => {
+					// pubDate is an ISO 8601 string, so lexical order is chronological.
+					// Compare strings directly (descending = newest first).
+					const episodes = request.result.sort((a, b) => (a.pubDate < b.pubDate ? 1 : a.pubDate > b.pubDate ? -1 : 0));
+					resolve(episodes);
+				};
 				request.onerror = () => reject(request.error);
 			});
 		},

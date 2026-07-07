@@ -6,7 +6,9 @@ episode-player {
 	height: 100%;
 	width: 100%;
 	clip-path: inset(0 0 0 0 round 0);
-	transition: clip-path 350ms, translate 350ms;
+	transition:
+		clip-path 350ms,
+		translate 350ms;
 	background: var(--color-background-intense);
 	display: grid;
 	grid-template-rows: 1fr 5rem;
@@ -16,6 +18,7 @@ episode-player {
 
 	img {
 		aspect-ratio: 1 /1;
+		object-fit: cover;
 		background: var(--color-ui-muted);
 	}
 
@@ -72,7 +75,9 @@ episode-player {
 		padding: 15%;
 		background: currentColor;
 		border-radius: 50%;
-		transition: width 250ms, height 250ms;
+		transition:
+			width 250ms,
+			height 250ms;
 		svg {
 			color: var(--color-background-intense);
 			width: 100%;

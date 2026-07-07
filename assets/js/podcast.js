@@ -4,6 +4,7 @@
  */
 
 import { Db } from '../data/db.js';
+import { AUDIO_CACHE } from './shared.js';
 import { parseDuration, parseExplicit, proxyFetch } from './utilities.js';
 
 /**
@@ -54,7 +55,10 @@ export const fetchPodcast = async (feedUrl) => {
 	};
 
 	const attr = (ctx, selector, attrName) => ctx.querySelector(selector)?.getAttribute(attrName) || null;
-
+	const formatDate = (dateString) => {
+		const dateObj = new Date(dateString);
+		return dateObj.toISOString();
+	};
 	const resolveImage = (ctx) =>
 		attr(ctx, 'image', 'href') ||
 		text(ctx, 'image > url') ||
@@ -68,7 +72,7 @@ export const fetchPodcast = async (feedUrl) => {
 		feedUrl,
 		description: text(channel, 'description'),
 		summary: text(channel, 'summary'),
-		pubDate: text(channel, 'pubDate', 'lastBuildDate'),
+		pubDate: formatDate(text(channel, 'pubDate', 'lastBuildDate')),
 		image: resolveImage(channel),
 		author: text(channel, 'author', 'managingEditor'),
 		category:
@@ -87,7 +91,7 @@ export const fetchPodcast = async (feedUrl) => {
 			link: text(item, 'link'),
 			description: text(item, 'description', 'summary'),
 			subtitle: text(item, 'subtitle'),
-			pubDate: text(item, 'pubDate'),
+			pubDate: formatDate(text(item, 'pubDate')),
 			guid: text(item, 'guid') || attr(item, 'guid', 'isPermaLink'),
 			image: resolveImage(item),
 			audio: attr(item, 'enclosure', 'url') || attr(item, 'content', 'url'),
@@ -102,7 +106,6 @@ export const fetchPodcast = async (feedUrl) => {
 			archived: false,
 		};
 	});
-	console.log(episodes);
 	return { podcast, episodes };
 };
 
@@ -173,32 +176,17 @@ export const refreshAll = async () => {
  * @returns {Promise<void>}
  * @throws {Error} If there is no active service worker or if saving to the cache fails
  */
-export const cacheAudio = (url, guid) => {
-	return new Promise((resolve, reject) => {
-		if (!navigator.serviceWorker.controller) {
-			return reject(new Error('No active service worker'));
-		}
-
-		const channel = new MessageChannel();
-
-		channel.port1.onmessage = (event) => {
-			const data = event.data;
-			if (data.type === 'CACHE_AUDIO_RESULT' && data.url === url) {
-				if (data.ok) {
-					// update the db
-					Db.episodes.updateProp(guid, 'downloaded', true);
-					resolve(data.url);
-				} else {
-					reject(new Error(data.error || 'Failed to cache audio'));
-				}
-			}
-		};
-
-		navigator.serviceWorker.controller.postMessage(
-			{ type: 'CACHE_AUDIO', url },
-			[channel.port2] // transfer port2 to the SW
-		);
-	});
+export const cacheAudio = async (url, guid) => {
+	const cache = await caches.open(AUDIO_CACHE);
+	const response = await proxyFetch(url);
+	if (response && response.ok) {
+		await cache.put(url, response.clone());
+		Db.episodes.updateProp(guid, 'downloaded', true);
+		console.log('Success. Cached audio');
+		return response.url;
+	} else {
+		new Error(response.error || 'Failed to cache audio');
+	}
 };
 
 /**
@@ -210,30 +198,11 @@ export const cacheAudio = (url, guid) => {
  * @returns {Promise<void>}
  * @throws {Error} If there is no active service worker
  */
-export const deleteAudio = (url, guid) => {
-	return new Promise((resolve, reject) => {
-		if (!navigator.serviceWorker.controller) {
-			return reject(new Error('No active service worker'));
-		}
-		const channel = new MessageChannel();
-		channel.port1.onmessage = (event) => {
-			const data = event.data;
-			if (data.type !== 'DELETE_AUDIO_RESULT' || data.url !== url) {
-				return;
-			}
-			// update the db
-			Db.episodes.updateProp(guid, 'downloaded', false);
-			if (data.ok) {
-				// Cache delete succeeded
-				resolve(data.url);
-			} else {
-				// Cache delete failed (likely not found)
-				console.warn(`deleteAudio: SW reported error, treating as success: ${data.error}`);
-				resolve(data.url);
-			}
-		};
-		navigator.serviceWorker.controller.postMessage({ type: 'DELETE_AUDIO', url }, [channel.port2]);
-	});
+export const deleteAudio = async (url, guid) => {
+	const cache = await caches.open(AUDIO_CACHE);
+	const deleted = await cache.delete(url);
+	Db.episodes.updateProp(guid, 'downloaded', false);
+	return url;
 };
 
 /**
@@ -245,37 +214,11 @@ export const deleteAudio = (url, guid) => {
  * @returns {Promise<void>}
  * @throws {Error} If there is no active service worker
  */
-export function checkAudio(url, guid) {
-	return new Promise((resolve, reject) => {
-		if (!navigator.serviceWorker?.controller) {
-			reject(new Error('No active service worker'));
-			return;
-		}
-
-		const channel = new MessageChannel();
-
-		channel.port1.onmessage = (event) => {
-			const msg = event.data;
-
-			if (msg.type !== 'CHECK_AUDIO_RESULT') return;
-
-			if (msg.ok) {
-				Db.episodes.updateProp(guid, 'downloaded', msg.cached);
-				resolve(msg.cached); // boolean
-			} else {
-				reject(new Error(msg.error || 'Unknown error'));
-			}
-		};
-
-		navigator.serviceWorker.controller.postMessage(
-			{
-				type: 'CHECK_AUDIO',
-				url,
-			},
-			[channel.port2]
-		);
-	});
-}
+export const checkAudio = async (url, guid) => {
+	const cache = await caches.open(AUDIO_CACHE);
+	const match = await cache.match(url);
+	return !!match;
+};
 
 /**
  * Sets the media information displayed on the device's lock screen and media controls.

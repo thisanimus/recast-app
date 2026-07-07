@@ -1,5 +1,5 @@
 import { Db } from '../data/db.js';
-import { fetchPodcast, cacheAudio } from '../js/podcast.js';
+import { fetchPodcast } from '../js/podcast.js';
 
 /**
  * @typedef {import('../data/db.js').Podcast} Podcast
@@ -40,7 +40,6 @@ class ViewSingle extends HTMLElement {
 		if (!feedUrl) return;
 
 		// Try DB first
-		await fetchPodcast(feedUrl);
 		const podcast = await Db.podcasts.read(feedUrl);
 		if (podcast) {
 			this.podcast = podcast;
@@ -103,7 +102,7 @@ class ViewSingle extends HTMLElement {
 	}
 	createEpisodeList() {
 		const episodeList = document.createDocumentFragment();
-		this.episodes.reverse().forEach((ep) => {
+		this.episodes.forEach((ep) => {
 			const el = document.createElement('podcast-episode');
 			el.episode = ep;
 			el.online = this.online;

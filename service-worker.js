@@ -1,11 +1,9 @@
-// service-worker.js
-const CACHE_VERSION = 'v0.023';
-const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const IMAGE_CACHE = `images-${CACHE_VERSION}`;
-const AUDIO_CACHE = `audio`;
-const PROXY_PREFIX = 'https://proxy.thisanimus.com/?url=';
-
 // Add your local files here
+import { AUDIO_CACHE, IMAGE_CACHE, PROXY_PREFIX } from './assets/js/shared.js';
+import { proxyFetch } from './assets/js/utilities.js';
+
+const APP_VERSION = 'v0.028';
+const STATIC_CACHE = `static-${APP_VERSION}`;
 // generate this with find "$(pwd)" -type f
 const STATIC_FILES = [
 	'/index.html',
@@ -90,7 +88,7 @@ self.addEventListener('activate', (event) => {
 							// Delete old versions of caches
 							return (
 								(name.startsWith('static-') && name !== STATIC_CACHE) ||
-								(name.startsWith('images-') && name !== IMAGE_CACHE) ||
+								(name.startsWith('images') && name !== IMAGE_CACHE) ||
 								(name.startsWith('audio') && name !== AUDIO_CACHE)
 							);
 						})
@@ -119,9 +117,23 @@ self.addEventListener('fetch', (event) => {
 	// Only intercept http(s) requests
 	if (!request.url.startsWith('http')) return;
 
+	// Let requests to the proxy pass straight through. proxyFetch() (used in
+	// cacheImage) hits PROXY_PREFIX, and those URLs end in the encoded image
+	// URL (e.g. ".jpg"), which would otherwise re-trigger isImageRequest and
+	// re-enter cacheImage, double-caching under a second key.
+	if (request.url.startsWith(PROXY_PREFIX)) return;
+
 	// Heuristics to check if it's an image request
 	if (isImageRequest(request)) {
 		event.respondWith(cacheImage(request));
+		return;
+	}
+
+	// Audio: serve a manually-cached copy if one exists, otherwise go to
+	// network. Never populate the cache here — only files explicitly
+	// downloaded via CACHE_AUDIO should ever live in AUDIO_CACHE.
+	if (isAudioRequest(request)) {
+		event.respondWith(audioCacheFirst(request));
 	}
 });
 
@@ -142,11 +154,13 @@ async function cacheImage(request) {
 	const cached = await cache.match(request);
 	if (cached) return cached;
 
-	// Fetch from network
+	// Fetch from network via proxyFetch: it tries a direct CORS fetch first
+	// and falls back to the CORS-enabled proxy for cross-origin image hosts.
+	// This yields real (non-opaque) responses so response.ok is meaningful
+	// and the image can be stored under its original URL.
 	try {
-		const response = await fetch(request);
+		const response = await proxyFetch(request.url);
 
-		// Only cache valid, opaque-safe responses
 		if (response && response.ok) {
 			cache.put(request, response.clone());
 		}
@@ -188,125 +202,44 @@ function isImageRequest(request) {
 }
 
 // ------------------------------------------------------------
-// MESSAGE HANDLER
+// AUDIO HANDLING HELPERS
 // ------------------------------------------------------------
-self.addEventListener('message', (event) => {
-	const { type, url } = event.data || {};
-	const port = event.ports[0];
 
-	if (!type || !port) return;
-
-	switch (type) {
-		case 'CACHE_AUDIO':
-			cacheAudioFile(url, port);
-			break;
-
-		case 'DELETE_AUDIO':
-			deleteAudioFile(url, port);
-			break;
-
-		case 'CHECK_AUDIO':
-			checkAudioFile(url, port);
-			break;
-	}
-});
-
-// ------------------------------------------------------------
-// CACHE AUDIO (with fallback proxy)
-// ------------------------------------------------------------
 /**
- * @param {string} url
- * @param {MessagePort} port
+ * Cache-first, no-populate strategy for audio.
+ *
+ * Returns the manually-downloaded copy from AUDIO_CACHE when present,
+ * otherwise falls through to the network. Unlike cacheImage(), this
+ * never writes to the cache — only CACHE_AUDIO downloads populate it.
+ *
+ * @param {Request} request
+ * @returns {Promise<Response>}
  */
-async function cacheAudioFile(url, port) {
-	try {
-		const cache = await caches.open(AUDIO_CACHE);
-		let response;
+async function audioCacheFirst(request) {
+	const cache = await caches.open(AUDIO_CACHE);
 
-		try {
-			// Try direct fetch first
-			response = await fetch(url);
+	// Files are stored under the original URL (see cacheAudioFile), so
+	// match by URL and ignore the Range header a media element may send.
+	const cached = await cache.match(request, { ignoreVary: true });
+	if (cached) return cached;
 
-			// If fetch succeeds but returns HTTP error, try proxy
-			if (!response.ok) {
-				console.log(`Direct fetch returned ${response.status}, trying proxy...`);
-				const proxyUrl = PROXY_PREFIX + encodeURIComponent(url);
-				response = await fetch(proxyUrl);
-			}
-		} catch (fetchError) {
-			// CORS errors or network failures end up here
-			console.log('Direct fetch failed (likely CORS), trying proxy...', fetchError.message);
-			const proxyUrl = PROXY_PREFIX + url;
-			response = await fetch(proxyUrl);
-		}
-
-		if (response && response.ok) {
-			await cache.put(url, response.clone());
-			port.postMessage({ type: 'CACHE_AUDIO_RESULT', ok: true, url });
-		} else {
-			port.postMessage({
-				type: 'CACHE_AUDIO_RESULT',
-				ok: false,
-				url,
-				error: `Fetch failed with status ${response?.status || 'unknown'}`,
-			});
-		}
-	} catch (err) {
-		// This catches errors from the proxy fetch or cache operations
-		port.postMessage({ type: 'CACHE_AUDIO_RESULT', ok: false, url, error: err.message });
-	}
+	return fetch(request);
 }
 
 /**
- * Deletes an audio file from the AUDIO_CACHE.
- * Sends a structured response back over the MessagePort.
+ * Determines if a fetch request is for audio.
  *
- * @param {string} url
- * @param {MessagePort} port
- */
-async function deleteAudioFile(url, port) {
-	try {
-		const cache = await caches.open(AUDIO_CACHE);
-		const deleted = await cache.delete(url);
-
-		port.postMessage({
-			type: 'DELETE_AUDIO_RESULT',
-			ok: deleted,
-			url,
-		});
-	} catch (err) {
-		port.postMessage({
-			type: 'DELETE_AUDIO_RESULT',
-			ok: false,
-			url,
-			error: err.message,
-		});
-	}
-}
-
-/**
- * Deletes an audio file from the AUDIO_CACHE.
- * Sends a structured response back over the MessagePort.
+ * Checks:
+ *   • request.destination === 'audio'
+ *   • OR URL ends with a common audio extension
  *
- * @param {string} url
- * @param {MessagePort} port
+ * @param {Request} request
+ * @returns {boolean}
  */
-async function checkAudioFile(url, port) {
-	try {
-		const cache = await caches.open(AUDIO_CACHE);
-		const match = await cache.match(url);
-		port.postMessage({
-			type: 'CHECK_AUDIO_RESULT',
-			ok: true,
-			cached: !!match,
-			url,
-		});
-	} catch (err) {
-		port.postMessage({
-			type: 'CHECK_AUDIO_RESULT',
-			ok: false,
-			error: err.message,
-			url,
-		});
-	}
+function isAudioRequest(request) {
+	// Best indicator — browsers mark <audio> fetches with this destination
+	if (request.destination === 'audio') return true;
+
+	const url = request.url.toLowerCase().split('?')[0];
+	return /\.(mp3|m4a|m4b|aac|ogg|oga|opus|wav|flac|weba)$/.test(url);
 }

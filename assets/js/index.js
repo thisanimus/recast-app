@@ -51,7 +51,7 @@ if (podcast && episodes) {
 
 if ('serviceWorker' in navigator) {
 	navigator.serviceWorker
-		.register('/service-worker.js')
+		.register('/service-worker.js', { type: 'module' })
 		.then((reg) => console.log('Service Worker registered', reg))
 		.catch((err) => console.error('Service Worker registration failed', err));
 }
